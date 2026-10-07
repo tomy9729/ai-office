@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.1.2**
+Version: **0.2.0**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -26,9 +26,11 @@ Main은 요구 분석, 코드 읽기, 계획, 영향 판단, 역할·모델 선�
 
 ## Workflow와 Execution Plan
 
-대표 요청 → Main 분석 → 필요한 담당자와 모델 선택 → 업무 배정 → 담당자 작업 → 리뷰·검증 → Main 결과 통합·최종 확인 → 업무 보고 → 설정된 기록 저장 → 완료.
+대표 요청 → 기록 대상이면 업무 티켓 생성 → Main 분석 → 필요한 담당자와 모델 선택 → 업무 배정 → 담당자 작업 → 리뷰·검증 → Main 결과 통합·최종 확인 → 업무 보고 → 설정된 기록 저장 → 완료.
 
 복잡하거나 영향이 큰 변경은 실제 파일과 흐름을 읽은 뒤 10줄 이내 요약과 필요한 Execution Plan을 만듭니다. Plan은 역할·범위·모델 선택·의존성·검증을 담는 초기안이며 조사 결과에 따라 조정합니다. 작은 변경에는 계획을 만들지 않습니다. [templates.md](references/templates.md)와 [teams.md](references/teams.md)는 현재 사용하던 템플릿과 조합 예시입니다.
+
+업무 티켓은 기록할 가치가 있는 요청 하나를 식별해 Plan, 담당자 작업, Review, QA, Report와 Decision을 연결합니다. `AO-YYYYMMDD-NNN · 구체적인 업무 제목`을 쓰고 같은 요청의 후속 작업은 같은 ID를 유지합니다. 단순 질의에는 만들지 않으며 Plan이나 Agent를 강제하지 않습니다. 번호를 확인·예약할 수 없거나 동시 발급 가능성이 있으면 전체 UUID 대체 형식을 사용합니다. 발급·충돌 규칙은 [SKILL.md](SKILL.md), 기록 형식은 [templates.md](references/templates.md)에 있습니다.
 
 ## Report Architecture
 
@@ -46,7 +48,7 @@ Core는 기록 방법과 템플릿을 관리하고, 외부 report_repository는 
 
 ```text
 <report_repository>/
-├─ Reports/YYYY/MM/YYYY-MM-DD-작업명.md
+├─ Reports/YYYY/MM/Ticket-ID-작업명.md
 ├─ INDEX.md
 └─ Decisions/DECISIONS.md
 ```

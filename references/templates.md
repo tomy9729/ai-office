@@ -1,10 +1,24 @@
 # Plan 및 보고 템플릿
 
+## Ticket 정보
+
+```text
+Ticket: AO-YYYYMMDD-NNN
+Title: 짧고 구체적인 업무 제목
+Status: COMPLETED / PARTIAL / BLOCKED
+Report / Decision: 관련 기록 링크 또는 없음
+```
+
+티켓 비대상 작업에서는 Ticket과 Title 필드를 생략한다. 발급·예약·후속 요청 규칙은 [SKILL.md](../SKILL.md)의 업무 티켓을 따른다. 상태는 별도 생명주기가 아닌 기존 최종 보고 상태다. 순번을 확인·예약할 수 없거나 동시 발급 가능성이 있으면 ID의 NNN 대신 전체 UUID를 사용하고 이유를 남긴다.
+
 ## Plan 요약
 
 10줄 이내로 목적, 현재/원하는 동작, 주요 파일과 호출 흐름, 핵심 방향, 필수 제약, 영향 범위, 결과 중심 검증을 적는다. 확인하지 않은 구현 세부는 고정하지 않는다.
 
 ## Execution Plan
+
+Ticket: [발급한 Ticket ID]
+Title: [업무 제목]
 
 Team (원팀 구성): [선택한 담당자 조합 / 직무 하나 / 사용자 정의]
 
@@ -41,6 +55,8 @@ Implementation이 필요한 Bugfix에는 Implementer를 최소 1개 배정한다
 ## Agent 할당
 
 ```text
+Ticket: [발급한 Ticket ID]
+Title: [업무 제목]
 표시 제목: [Role] · [Model Full Name] · [Task]
 모델 (요청 / 실제 확인):
 역할 / 목적:
@@ -54,6 +70,8 @@ Implementation이 필요한 Bugfix에는 Implementer를 최소 1개 배정한다
 ## Agent 결과
 
 ```text
+Ticket: [발급한 Ticket ID]
+Title: [업무 제목]
 표시 제목: [Role] · [Model Full Name] · [Task]
 모델 (요청 / 실제 확인):
 Role / task:
@@ -64,6 +82,8 @@ Limitations or blocker:
 ```
 
 ## Agent Report
+
+Ticket: [발급한 Ticket ID]
 
 필요한 경우 실제 사용한 agent만 기록한다. Complexity는 선택적인 상대 난이도이며 유용할 때만 low/medium/high로 적는다.
 
@@ -78,10 +98,12 @@ Max Parallel: [관측된 최대 동시 Agent 수; Main 제외]
 
 ## 최종 보고와 기록
 
-기록 대상과 완료 조건은 [SKILL.md](../SKILL.md)의 보고 규칙을 따른다. `report_repository`가 없으면 대화의 최종 보고로 충분하다. 지정되어 있으면 보고서는 `<report_repository>/Reports/YYYY/MM/YYYY-MM-DD-작업명.md`에 저장하며 INDEX와 필요한 결정 기록도 갱신한다. 날짜는 사용자 또는 프로젝트의 `report_timezone` 기준이며 없으면 제공된 현지 시간, 그것도 없으면 UTC를 사용하고 표시한다. 같은 이름이 있으면 덮어쓰지 말고 `-2`처럼 식별 suffix를 붙인다. 짧고 실용적으로 쓰며 사고 과정, 대화, 원시 로그를 덤프하지 않는다. 불필요한 항목은 생략할 수 있지만 결과·검증·남은 사항·상태는 확인 가능해야 한다. 없는 사항은 `없음`이라 쓰고, 실행하지 않은 검증을 수행했다고 쓰지 않는다.
+기록 대상과 완료 조건은 [SKILL.md](../SKILL.md)의 보고 규칙을 따른다. `report_repository`가 없으면 대화의 최종 보고로 충분하다. 지정되어 있으면 보고서는 `<report_repository>/Reports/YYYY/MM/Ticket-ID-작업명.md`에 저장하며 INDEX와 필요한 결정 기록도 갱신한다. 순번 티켓은 발급 때 예약한 파일을 최종 보고로 갱신한다. 날짜는 사용자 또는 프로젝트의 `report_timezone` 기준이며 없으면 제공된 현지 시간, 그것도 없으면 UTC를 사용하고 표시한다. 다른 작업의 기존 파일은 덮어쓰지 않는다. 신규 순번 예약이 충돌하면 목록을 다시 확인하고 다음 번호를 발급하며 작업명 suffix로 번호 충돌을 회피하지 않는다. 안전한 순번 발급이 불가능하면 전체 UUID 대체 형식과 제한을 보고한다. 짧고 실용적으로 쓰며 사고 과정, 대화, 원시 로그를 덤프하지 않는다. 불필요한 항목은 생략할 수 있지만 결과·검증·남은 사항·상태는 확인 가능해야 한다. 없는 사항은 `없음`이라 쓰고, 실행하지 않은 검증을 수행했다고 쓰지 않는다.
 
 ```markdown
-# 작업 제목
+# Ticket ID · 업무 제목
+
+Ticket: [발급한 Ticket ID]
 
 ## 요청
 ## 수행 결과
@@ -94,6 +116,6 @@ Max Parallel: [관측된 최대 동시 Agent 수; Main 제외]
 COMPLETED / PARTIAL / BLOCKED
 ```
 
-`INDEX.md`에는 보고서마다 `YYYY-MM-DD | 제목 | 상태 | [[Reports/YYYY/MM/YYYY-MM-DD-작업명]]` 한 줄을 추가한다. 과거 작업을 찾을 때는 INDEX를 먼저 읽고 관련 보고만 연다.
+`INDEX.md`에는 보고서마다 `YYYY-MM-DD | Ticket ID | 제목 | 상태 | [[Reports/YYYY/MM/Ticket-ID-작업명]]` 한 줄을 추가한다. 기존 구조에 Ticket ID를 추가하며 과거 행은 소급 변경하지 않는다. 같은 티켓의 후속 결과는 해당 행을 갱신한다. 과거 작업을 찾을 때는 INDEX를 먼저 읽고 관련 보고만 연다.
 
-중요한 아키텍처·API·상태 관리·공통 규칙·후속 기술 선택이나 기존 방식에서 새 방식으로 바꾼 결정만 `Decisions/DECISIONS.md`에 이유와 관련 보고 링크를 남긴다. 보고서 전체를 복제하지 않는다. 예: `- YYYY-MM-DD | 결정: 새 방식 채택 | 이유: ... | 보고: [[Reports/YYYY/MM/YYYY-MM-DD-작업명]]`
+중요한 아키텍처·API·상태 관리·공통 규칙·후속 기술 선택이나 기존 방식에서 새 방식으로 바꾼 결정만 `Decisions/DECISIONS.md`에 Ticket ID, 이유와 관련 보고 링크를 남긴다. 보고서 전체를 복제하지 않는다. 예: `- YYYY-MM-DD | Ticket: AO-YYYYMMDD-NNN | 결정: 새 방식 채택 | 이유: ... | 보고: [[Reports/YYYY/MM/Ticket-ID-작업명]]`
