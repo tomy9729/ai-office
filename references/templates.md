@@ -6,9 +6,9 @@
 
 ## Execution Plan
 
-Team: [선택한 조합 / 없음 / 사용자 정의]
+Team (원팀 구성): [선택한 담당자 조합 / 직무 하나 / 사용자 정의]
 
-Agent instances: [고유 이름과 역할]
+Agent instances: [고유 식별자와 표시 제목]
 
 Parallel groups: [독립 작업 그룹 또는 없음]
 
@@ -19,17 +19,30 @@ Parallel groups: [독립 작업 그룹 또는 없음]
 | 조사 | Explorer #1 | 선택 근거와 요청/확인 구분 | 조사 범위 | low/medium/high 또는 생략 | 없음 | 근거·경로·흐름 |
 | 구현 | Implementer #1 | 선택 근거와 요청/확인 구분 | 결정된 수정 범위 | low/medium/high 또는 생략 | 조사 결과 | 변경 동작·검증 |
 | 확인 | Reviewer 또는 QA | 선택 근거와 요청/확인 구분 | 독립 diff 또는 실행 확인 | low/medium/high 또는 생략 | 구현 완료 | finding·실제 결과 |
-| 통합 | Main | Main | 충돌 해결·최종 확인 | — | 위 결과 | 요구사항과 diff 대조 |
+| 통합 | Main | 확인 모델 / 모델 미확정 | 충돌 해결·최종 확인 | — | 위 결과 | 요구사항과 diff 대조 |
 
 Implementation이 필요한 Bugfix에는 Implementer를 최소 1개 배정한다. 조사만 하고 끝나는 버그 분석은 예외다.
 
 ### 작은 작업 축약
 
-`[Role] — [담당 일과 범위] — [모델 선택 근거] — [결과/검증]`
+`[Role] · [Model Full Name] · [Task]` — [모델 선택 근거와 요청/확인 구분] — [결과/검증]
+
+## 담당자 표시 제목 예시
+
+기본은 `[Role] · [Model Full Name] · [Task]`이며 실제 확인된 모델 이름과 버전을 사용한다. 요청 모델만 알고 실제 모델을 확인하지 못하면 제목은 `모델 미확정`으로 쓰고 요청값은 별도로 기록한다.
+
+- `Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정`
+- `Reviewer · 6 Astra · Core 변경 diff·회귀 위험 검토`
+- `QA · 5.6 Luna · 설치·업데이트 절차 동작 검증`
+- `Explorer · 모델 미확정 · 로그인 API 호출 흐름 조사` (요청 모델: 6.1 Sol, 실제 확인: 미확정)
+
+작성·runtime 적용 규칙은 [SKILL.md](../SKILL.md)의 담당자 표시 제목을 따른다.
 
 ## Agent 할당
 
 ```text
+표시 제목: [Role] · [Model Full Name] · [Task]
+모델 (요청 / 실제 확인):
 역할 / 목적:
 담당 범위:
 필수 제약:
@@ -41,6 +54,8 @@ Implementation이 필요한 Bugfix에는 Implementer를 최소 1개 배정한다
 ## Agent 결과
 
 ```text
+표시 제목: [Role] · [Model Full Name] · [Task]
+모델 (요청 / 실제 확인):
 Role / task:
 Result:
 Evidence (paths, commands, observed behavior):
@@ -52,10 +67,10 @@ Limitations or blocker:
 
 필요한 경우 실제 사용한 agent만 기록한다. Complexity는 선택적인 상대 난이도이며 유용할 때만 low/medium/high로 적는다.
 
-| Agent instance | Role | Task | Model (requested / confirmed) | Complexity | Result |
+| Agent identifier / 표시 제목 | Role | Task | Model (requested / confirmed) | Complexity | Result |
 |---|---|---|---|---|---|
-| Explorer #1 | Explorer | 조사 범위 | 요청 / 확인 여부 | 선택 | 완료 및 근거 |
-| Implementer #1 | Implementer | 수정 범위 | 요청 / 확인 여부 | 선택 | 변경 및 검증 |
+| explorer_flow / Explorer · 6.1 Sol · 로그인 API 호출 흐름 조사 | Explorer | 조사 범위 | 6.1 Sol / 6.1 Sol 확인 | 선택 | 완료 및 근거 |
+| implementer_core / Implementer · 모델 미확정 · AI Office Core 보고 규칙 수정 | Implementer | 수정 범위 | 6.1 Sol / 미확정 | 선택 | 변경 및 검증 |
 
 Max Parallel: [관측된 최대 동시 Agent 수; Main 제외]
 

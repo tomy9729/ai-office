@@ -1,28 +1,32 @@
 # AI Office
 
-Version: **0.1.1**
+Version: **0.1.2**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
-AI Office는 Main이 일을 분석하고 역할을 선택하여 위임·통합·검증·완료 판단을 수행하는 범용 Agent 운영 체계입니다. 기존 설치에서 사용하던 운영 규칙, 여섯 역할과 템플릿을 독립 패키지로 추출했습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
+AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
 
 ## Core Concept과 Main / Sub Agent
 
-모델은 역량, Concept은 직업입니다. 같은 직업도 task 난이도·위험·맥락에 따라 지원 모델을 선택하며 역할에 고정된 모델은 없습니다. Main은 요구 분석, 코드 읽기, 계획, 영향 판단, 역할·모델 선택, 통합과 최종 확인을 맡습니다. 코드 수정과 test/lint/typecheck/build/commit 실행은 Sub Agent에 맡깁니다. 작은 일은 필요한 한 명만 쓰며 독립 작업에 병렬 이득이 있을 때만 여러 명을 씁니다.
+Role/Concept은 직무, Model은 모델과 수행 역량이며 독립적으로 선택합니다. Team은 원팀, Skill/Plugin은 업무 도구와 전문 업무 지식, AGENTS.md는 프로젝트 규칙입니다. Plan은 작업 계획, Delegation은 업무 배정, Review는 리뷰, QA는 검증, Report는 업무 보고, Decision log는 의사결정 기록, Core는 운영 규칙입니다.
 
-| Role | 책임 |
+Main은 요구 분석, 코드 읽기, 계획, 영향 판단, 역할·모델 선택, 통합과 최종 확인을 맡습니다. 코드 수정과 test/lint/typecheck/build/commit 실행은 Sub Agent에 맡깁니다. 작은 일은 필요한 한 명만 쓰며 독립 작업에 병렬 이득이 있을 때만 여러 명을 씁니다.
+
+| Role / 직무 | 책임 |
 |---|---|
-| Explorer | 진입점·호출 흐름·기존 패턴·영향 범위 조사 |
-| Debugger | 재현·원인 가설 검증·근본 원인 조사 |
-| Implementer | Main이 정한 범위의 최소 구현과 검증 |
-| Reviewer | diff·요구사항·회귀·안전성 독립 검토 |
-| QA | 요구사항에 연결된 실제 실행 검증 |
-| Specialist | 지정된 기술·도메인 조사와 제한된 자문 |
+| Explorer / 조사 담당 | 진입점·호출 흐름·기존 패턴·영향 범위 조사 |
+| Debugger / 문제 분석 담당 | 재현·원인 가설 검증·근본 원인 조사 |
+| Implementer / 개발 담당 | Main이 정한 범위의 최소 구현과 검증 |
+| Reviewer / 리뷰 담당 | diff·요구사항·회귀·안전성 독립 검토 |
+| QA / 검증 담당 | 요구사항에 연결된 실제 실행 검증 |
+| Specialist / 전문 담당 | 지정된 기술·도메인 조사와 제한된 자문 |
 
 역할 정의는 [roles/](roles)에 있습니다. 현재 runtime이 제공하는 agent_type을 선택하거나, 선택 기능이 없으면 역할의 developer_instructions를 할당 메시지에 전달합니다. 없는 API를 만들지 않으며 위임이 불가능한 경우 제한을 보고합니다. child는 배정된 결과를 보고한 뒤 task를 끝내고 Office를 다시 구성하지 않습니다. 후속 일은 기존 agent를 재사용하며 runtime 종료 기능은 제공되는 범위에서만 사용합니다.
 
+담당자 표시 제목은 `[Role] · [Model Full Name] · [Task]`로 적습니다. 예: `Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정`. 상세 규칙은 [SKILL.md](SKILL.md), 예시는 [templates.md](references/templates.md)에 있습니다.
+
 ## Workflow와 Execution Plan
 
-사용자 요청 → Main 분석 → 작업 분배 → Sub 실행 → Main 통합 → 리뷰·검증 → 최종 보고 → 설정된 기록 저장 → 완료.
+대표 요청 → Main 분석 → 필요한 담당자와 모델 선택 → 업무 배정 → 담당자 작업 → 리뷰·검증 → Main 결과 통합·최종 확인 → 업무 보고 → 설정된 기록 저장 → 완료.
 
 복잡하거나 영향이 큰 변경은 실제 파일과 흐름을 읽은 뒤 10줄 이내 요약과 필요한 Execution Plan을 만듭니다. Plan은 역할·범위·모델 선택·의존성·검증을 담는 초기안이며 조사 결과에 따라 조정합니다. 작은 변경에는 계획을 만들지 않습니다. [templates.md](references/templates.md)와 [teams.md](references/teams.md)는 현재 사용하던 템플릿과 조합 예시입니다.
 
