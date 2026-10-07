@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.5.1**
+Version: **0.5.2**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -34,7 +34,7 @@ Sub Agent 목록의 실제 인스턴스 이름에 `[Role] · [Model Full Name] �
 
 ## 업무 채팅 보고
 
-Main과 Sub Agent가 채팅에 보내는 업무 답변 자체를 보고 양식으로 작성합니다. 공통 제목은 `### 보고 구분 · 업무명`이며 발급된 티켓은 제목 바로 아래 `**Ticket:** [ID]`로 한 번만 표시합니다. 일반 질의응답·아이디어 제안·확인 질문은 이 양식을 강제하지 않습니다.
+Main과 Sub Agent가 채팅에 보내는 업무 답변 자체를 보고 양식으로 작성합니다. 공통 제목은 `### 보고 구분 · 업무명`이며 발급된 티켓은 제목 바로 아래 `**Ticket:** [ID]`로 한 번만 표시합니다. 모든 업무 채팅 보고는 제목과 발급된 Ticket 다음, 본문 전에 보고자를 표시합니다. 티켓이 없으면 제목 바로 다음에 표시합니다. Main은 `**보고자:** Main · 업무 조율`, Sub Agent는 `**보고자:** [실제 배정 Role] · [기존 직무]`를 사용하며 여섯 직무 대응은 [SKILL.md](SKILL.md#공통-응답문서-스타일)를 따릅니다. 모델·식별자·범위는 기존 본문에 유지합니다. 일반 질의응답·아이디어 제안·확인 질문은 이 양식을 강제하지 않습니다.
 
 | 보고 구분 | 필수 항목 |
 |---|---|
@@ -90,6 +90,8 @@ python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone A
 ```
 
 Report·INDEX·필요한 Decision 저장 뒤 실행합니다. `--date`는 스냅샷 기간의 기준일이고 기본값은 지정 timezone의 현재 날짜입니다. 해당 일·주·월 파일 하나씩을 갱신합니다. DB·서버·watcher·실시간 Agent 상태 수집은 추가하지 않습니다. 상세 규칙과 제한은 [Workspace 규칙](references/workspace.md), metadata 예시는 [템플릿](references/templates.md)을 따릅니다.
+
+0.5.2는 업무 채팅 보고에 보고자 표시를 추가한 운영 규칙 보완입니다.
 
 0.5.1은 업무 채팅 보고 양식과 저장 보고서 정책을 구분한 운영 규칙 보완입니다.
 
