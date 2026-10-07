@@ -1,0 +1,24 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*
+config.local.*
+# Generated and temporary files
+__pycache__/
+*.py[cod]
+.cache/
+*.log
+*.tmp
+*.bak
+*.orig
+# Local reports and editor files
+Reports/
+Decisions/
+INDEX.md
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
