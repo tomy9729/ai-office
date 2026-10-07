@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.2.1**
+Version: **0.3.0**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -22,7 +22,7 @@ Main은 요구 분석, 코드 읽기, 계획, 영향 판단, 역할·모델 선�
 
 역할 정의는 [roles/](roles)에 있습니다. 현재 runtime이 제공하는 agent_type을 선택하거나, 선택 기능이 없으면 역할의 developer_instructions를 할당 메시지에 전달합니다. 없는 API를 만들지 않으며 위임이 불가능한 경우 제한을 보고합니다. child는 배정된 결과를 보고한 뒤 task를 끝내고 Office를 다시 구성하지 않습니다. 후속 일은 기존 agent를 재사용하며 runtime 종료 기능은 제공되는 범위에서만 사용합니다.
 
-Sub Agent 목록의 실제 인스턴스 이름에 `[Role] · [Model Full Name] · [Task]`를 적용합니다. 예: `Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정`. 현재 runtime은 허용 문자에 맞춘 `role_model_task`를 생성 인자 task_name에 넣으며 정확한 UI 표시에는 제한이 있습니다. 상세 규칙과 제한은 [SKILL.md](SKILL.md), 생성 인자 예시는 [templates.md](references/templates.md)에 있습니다.
+Sub Agent 목록의 실제 인스턴스 이름에 `[Role] · [Model Full Name] · [Task]`를 적용합니다. 예: `Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정`. 실제 모델 확인 불가 시 `[Role] · [Task]`로 표시하며 placeholder를 사용하지 않습니다. 현재 runtime은 허용 문자에 맞춘 `role_model_task`(실제 모델 확인 불가 시 `role_task`)를 생성 인자 task_name에 넣으며 정확한 UI 표시에는 제한이 있습니다. 상세 규칙과 제한은 [SKILL.md](SKILL.md), 생성 인자 예시는 [templates.md](references/templates.md)에 있습니다.
 
 ## Workflow와 Execution Plan
 
@@ -34,26 +34,45 @@ Sub Agent 목록의 실제 인스턴스 이름에 `[Role] · [Model Full Name] �
 
 ## Report Architecture
 
-Core는 기록 방법과 템플릿을 관리하고, 외부 report_repository는 실제 업무 보고서·INDEX·결정 데이터를 보관합니다. 템플릿 원본은 [references/templates.md](references/templates.md)입니다. 회사·프로젝트 규칙, PC 경로와 실제 업무 데이터는 Core Git에 넣지 않습니다.
+Core는 기록 방법과 템플릿을 관리하고, 외부 AI Office Workspace는 실제 업무 보고서·INDEX·결정·Dashboard 데이터를 보관합니다. Project Repository와 Project Knowledge는 실제 코드와 프로젝트 지식이며 Workspace 밖에 둡니다. 템플릿 원본은 [references/templates.md](references/templates.md)입니다. 회사·프로젝트 규칙, PC 경로와 실제 업무 데이터는 Core Git에 넣지 않습니다.
 
 범용 역할·모델 선택·위임, Plan·Review·QA, 완료·보고 방법과 설치 연결의 변경은 Core Git 대상입니다. 일반 업무의 보고서·INDEX·결정 기록 갱신만으로는 AI Office Git 변경·commit·push가 필요하지 않습니다.
 
 ## Completion State와 Reporting
 
-- **COMPLETED**: 구현·필요한 리뷰·실제 검증·Main 통합·최종 보고 및 설정된 기록 갱신, Core 변경 시 commit·push가 모두 끝남.
+- **COMPLETED**: 구현·필요한 리뷰·실제 검증·Main 통합·최종 보고 및 설정된 기록 갱신, Dashboard 갱신과 Core 변경 시 commit·push가 모두 끝남.
 - **PARTIAL**: 남은 일이 있으며 완료를 선언할 수 없음.
 - **BLOCKED**: 진행을 막는 조건이 있으며 원인과 필요한 조치를 보고함.
 
-사용자 또는 프로젝트 AGENTS.md에 report_repository를 지정할 수 있습니다. 프로젝트에서 명시한 값이 있으면 우선합니다. 미지정이면 대화의 최종 보고로 충분합니다. 지정된 경우 후속 가치가 있는 작업은 아래 형식으로 저장하며 저장 실패를 COMPLETED로 표시하지 않습니다.
+사용자 또는 프로젝트 AGENTS.md에 `ai_office_workspace`를 지정할 수 있습니다. 기존 `report_repository`는 같은 루트를 가리키는 호환 alias입니다. 프로젝트 설정이 우선하고 같은 범위에서는 ai_office_workspace가 우선합니다. 지정 경로를 그대로 쓰며 하위 폴더를 자동 추가하지 않습니다. 미지정이면 대화의 최종 보고로 충분합니다. 지정된 경우 후속 가치가 있는 작업은 아래 형식으로 저장하며 저장 실패를 COMPLETED로 표시하지 않습니다.
 
 ```text
-<report_repository>/
+<Workspace>/
+├─ Dashboard/Current/{index.html,data.json}
+├─ Dashboard/Archive/{Daily,Weekly,Monthly}/
 ├─ Reports/YYYY/MM/Ticket-ID-작업명.md
 ├─ INDEX.md
-└─ Decisions/DECISIONS.md
+├─ Decisions/DECISIONS.md
+├─ README.md
+└─ AI Office 운영 안내.md
 ```
 
 report_timezone은 사용자의 날짜 기준입니다. 없으면 제공된 현지 시간을, 그것도 없으면 UTC를 쓰고 표시합니다. 단순 질의·설명·조사는 저장을 강제하지 않습니다. 중요한 결정만 결정 기록에 남깁니다. 설정 parser나 별도 설정 시스템은 없습니다.
+
+## Size·MD·Report metadata와 Dashboard
+
+Size는 업무 범위와 투입 규모이며 S(명확한 단일 변경), M(여러 파일·역할), L(넓은 영향·여러 단계)만 사용합니다. 난이도·모델 역량·직급을 뜻하지 않습니다. MD는 업무량을 사람 기준 공수로 환산한 추정치이며 실행 시간·Token·모델 성능으로 계산하지 않습니다. Plan에는 Size와 estimated_md, Report에는 YAML metadata와 선택적인 final_md를 기록합니다. INDEX는 final_md를 우선합니다.
+
+Markdown Report → metadata 집계 → data.json → 정적 HTML 순서이며 Report가 원본입니다. Current와 일·주·월별 Archive는 서버 없이 파일로 열 수 있습니다. 과거 metadata가 없으면 별도 표시하거나 해당 집계에서 제외하며 추정하지 않습니다.
+
+```powershell
+python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone Asia/Seoul
+python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone Asia/Seoul --date 2026-10-07
+```
+
+Report·INDEX·필요한 Decision 저장 뒤 실행합니다. `--date`는 스냅샷 기간의 기준일이고 기본값은 지정 timezone의 현재 날짜입니다. 해당 일·주·월 파일 하나씩을 갱신합니다. DB·서버·watcher·실시간 Agent 상태 수집은 추가하지 않습니다. 상세 규칙과 제한은 [Workspace 규칙](references/workspace.md), metadata 예시는 [템플릿](references/templates.md)을 따릅니다.
+
+0.3.0은 원팀·역할·Core 경계를 유지하면서 Workspace·공수·Dashboard 기록 기능을 추가하므로 MINOR 변경입니다.
 
 ## Project-specific Skills와의 관계
 
@@ -132,6 +151,9 @@ ai-office/
 ├─ roles/office-*.toml
 ├─ references/teams.md
 ├─ references/templates.md
+├─ references/workspace.md
+├─ scripts/generate_dashboard.py
+├─ scripts/test_generate_dashboard.py
 └─ examples/AGENTS.example.md
 ```
 

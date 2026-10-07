@@ -5,7 +5,7 @@
 
 # 선택 설정
 
-- report_repository: /path/to/reports
+- ai_office_workspace: /path/to/workspace
 - report_timezone: Asia/Seoul
 
-보고서 저장을 사용하지 않으면 report_repository 줄을 제거한다. 날짜 기준은 사용자 환경에 맞춘다. 이 예시를 그대로 복사한 뒤 placeholder 경로를 실제 경로로 바꾼다.
+Workspace를 사용하지 않으면 ai_office_workspace 줄을 제거한다. placeholder 경로를 실제 환경 경로로 바꾼다. 기존 report_repository도 호환 alias로 지원하며 지정 경로에 하위 폴더를 자동 추가하지 않는다. 프로젝트 설정이 사용자 설정보다 우선하고 같은 범위에서는 ai_office_workspace가 우선한다. Workspace 밖의 프로젝트 코드와 개인 지식은 AI Office가 관리하지 않는다.
