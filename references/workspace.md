@@ -47,7 +47,18 @@ Report 상단 YAML은 ticket, title, date, status, size, estimated_md, final_md,
 
 generator의 YAML 지원 범위는 flat scalar와 `agents`/`models`의 scalar block list(`  - Role`), 빈 목록 `[]`, null/생략이다. JSON 방식 double-quote escape와 single-quote의 `''` escape를 지원한다. colon 뒤 공백이나 hash comment와 혼동될 문자열은 따옴표로 감싼다. 중첩 구조, 값이 있는 inline 배열, anchors, tags, multiline scalar는 지원하지 않는다. 지원하지 않는 형식·중복 키·잘못된 날짜/상태/Size/MD는 Report 상대 경로와 오류를 표시하고 중단한다. 모든 파싱·렌더링이 성공하기 전에는 기존 Dashboard를 교체하지 않으며 원본 Markdown은 수정하지 않는다. 파일은 각각 임시 파일 작성 후 atomic replace한다.
 
-Current는 오늘 업무 수·상태·Size·Estimated/Final/평균 MD·Role/Model 참여·최근 업무·주요 Decision·최근 Core 개선을 표시한다. Daily는 당일 상태·Size·MD·참여·업무·Decision, Weekly는 완료율·날짜별 MD·프로젝트·Decision·Core 개선, Monthly는 주별 업무/MD·Size별 평균 MD·프로젝트 비율·Decision/Core 횟수를 표시한다. 일별·주별 MD, 프로젝트별 MD, Estimated와 Final 차이를 함께 보여준다. Archive는 Daily 하루 하나, Weekly ISO 주 하나, Monthly 월 하나로 기간별 파일을 갱신하며 실행마다 파일을 추가하지 않는다. 과거 기간 스냅샷은 별도의 날짜로 생성할 수 있다.
+## Interactive Operations Console
+
+HTML Dashboard의 목적은 브라우저의 레이아웃·시각화·상태 관리·상호작용을 활용하여 AI Office 데이터를 탐색·분석하는 운영 UI를 제공하는 것이다. 정적 보고서처럼 모든 정보를 한 화면에 나열하지 않는다. 첫 화면은 간결하게, 필요한 정보는 깊게 탐색하게 구성하며 기록이 늘어도 검색·정렬·필터·페이지 이동으로 사용할 수 있어야 한다.
+
+단일 HTML 안에서 Overview(주요 KPI·Completion·Workload Trend·Project Workload·최근 업무·주요 결정), Analytics(MD·Estimated vs Final·Project·Size·Role·Model), History(전체 업무·Decision Timeline·Core Changes), Health(Metadata·MD·Ticket·Project·Size Coverage) view를 전환한다. 모든 업무 차트와 목록은 같은 Project·Status·Size·Role·Model·날짜 범위·검색 상태를 사용한다. 차트/legend 클릭과 키보드 Enter/Space는 같은 필터를 변경하고 chip으로 적용 조건과 제거 동작을 표시하며 한 번에 초기화할 수 있다. 날짜 trend는 날짜 선택을 목록으로 연결한다. Health의 미기록 선택도 해당 업무 목록으로 연결한다. Decision에 업무 관계를 추정하지 않으며 기간·날짜만 적용한다고 표시한다.
+
+브라우저에서 집계하고 SVG donut·trend·Estimated/Final scatter와 업무 상세 dialog를 제공한다. null MD는 미기록이고 0은 기록된 값이다. 평균·차이 분석은 실제 값이 있는 업무만 계산한다. Metadata Coverage는 frontmatter 존재 여부이며 모든 필드의 완전성을 뜻하지 않는다. Role/Model 참여 횟수는 해당 목록이 있는 업무 수이며 요청 모델이나 미확인 모델을 집계하지 않는다. 원본 Markdown은 textContent로 표시하고 JSON은 script 종료 태그를 안전하게 escape한다. 외부 CDN·fetch·서버·새 framework 의존 없이 file:// 및 offline 실행을 유지한다. library 금지 자체가 목표는 아니며 표현력·유지보수성의 실익이 있다면 정적 asset bundle을 고려한다.
+
+상태는 URL hash에 기록하여 view·필터·정렬·페이지를 유지하고 브라우저 뒤로/앞으로 이동을 지원한다. localStorage는 필수가 아니다. interaction은 진행 중/미완료 업무, 프로젝트 집중, 업무량 변화, Role/Model 사용, 높은 MD 업무, 중요한 결정, 기록 품질 질문 중 하나에 더 빠르게 답할 때 추가한다. 실시간 Agent 상태는 수집하지 않는다.
+
+Archive는 Daily 하루 하나, Weekly ISO 주 하나, Monthly 월 하나로 갱신한다. 선택한 기간 view로 열리고 전체 탐색에서도 해당 기간 종료일 이후 날짜의 업무·결정은 제외한다. 날짜 미기록은 전체 탐색에서 별도로 유지하며 과거 값을 추정하지 않는다. Current는 최신 전체 기록을 유지한다. Python 검증은 `python -m unittest discover -s scripts`, 브라우저 상태/interaction 최소 검증은 `node scripts/check_dashboard.cjs`로 실행한다.
+
 
 ## 기존 기록 이동
 

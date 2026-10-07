@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.3.2**
+Version: **0.4.0**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -63,7 +63,7 @@ report_timezone은 사용자의 날짜 기준입니다. 없으면 제공된 현�
 
 Size는 업무 범위와 투입 규모이며 S(명확한 단일 변경), M(여러 파일·역할), L(넓은 영향·여러 단계)만 사용합니다. 난이도·모델 역량·직급을 뜻하지 않습니다. MD는 업무량을 사람 기준 공수로 환산한 추정치이며 실행 시간·Token·모델 성능으로 계산하지 않습니다. Plan에는 Size와 estimated_md, Report에는 YAML metadata와 선택적인 final_md를 기록합니다. INDEX는 final_md를 우선합니다.
 
-Markdown Report → metadata 집계 → data.json → 정적 HTML 순서이며 Report가 원본입니다. Current와 일·주·월별 Archive는 서버 없이 파일로 열 수 있습니다. 과거 metadata가 없으면 별도 표시하거나 해당 집계에서 제외하며 추정하지 않습니다.
+Markdown Report → metadata 집계 → data.json → 인터랙티브 HTML 순서이며 Report가 원본입니다. Current와 일·주·월별 Archive는 인터넷·CDN·서버 없이 file://로 여는 단일 HTML Operations Console입니다. Overview / Analytics / History / Health로 전환하며 차트와 업무 목록은 Project·Status·Size·Role·Model·날짜·검색 상태를 공유합니다. 필터 chip·초기화, 정렬·페이지 이동, 업무 상세 dialog, URL hash의 탐색 상태 복원과 뒤로/앞으로 이동을 지원합니다. Decision은 날짜만 적용하며 연결 없는 업무 metadata를 추정하지 않습니다. Dashboard의 목적·설계 기준은 [Workspace 규칙](references/workspace.md)에 유지합니다. 과거 metadata가 없으면 별도 표시하거나 해당 집계에서 제외하며 추정하지 않습니다.
 
 ```powershell
 python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone Asia/Seoul
@@ -71,6 +71,8 @@ python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone A
 ```
 
 Report·INDEX·필요한 Decision 저장 뒤 실행합니다. `--date`는 스냅샷 기간의 기준일이고 기본값은 지정 timezone의 현재 날짜입니다. 해당 일·주·월 파일 하나씩을 갱신합니다. DB·서버·watcher·실시간 Agent 상태 수집은 추가하지 않습니다. 상세 규칙과 제한은 [Workspace 규칙](references/workspace.md), metadata 예시는 [템플릿](references/templates.md)을 따릅니다.
+
+0.4.0은 단일 HTML의 Operations Console과 연결된 데이터 탐색을 추가한 MINOR 변경입니다.
 
 0.3.0은 원팀·역할·Core 경계를 유지하면서 Workspace·공수·Dashboard 기록 기능을 추가하므로 MINOR 변경입니다.
 
@@ -154,6 +156,8 @@ ai-office/
 ├─ references/workspace.md
 ├─ scripts/generate_dashboard.py
 ├─ scripts/test_generate_dashboard.py
+├─ scripts/dashboard.html
+├─ scripts/check_dashboard.cjs
 └─ examples/AGENTS.example.md
 ```
 

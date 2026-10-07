@@ -86,6 +86,10 @@ estimated_md: 1
         self.assertIn("\\u003c/script\\u003e", output)
         self.assertIn("quoted%20%23%20report.md", output)
         self.assertNotIn("fetch(", output)
+        self.assertIn("Operations Console", output)
+        self.assertIn("check_dashboard.cjs", dashboard.TEMPLATE)
+        legacy = next(r for r in data["periods"]["daily"]["reports"] if r["title"] == "Legacy")
+        self.assertEqual(legacy["content"].splitlines()[0], "# Legacy")
         self.assertEqual(json.loads((current.parent / "data.json").read_text(encoding="utf-8")), data)
         daily = self.root / "Dashboard" / "Archive" / "Daily" / "2026" / "10" / "2026-10-07.html"
         self.assertTrue(daily.exists())
@@ -154,6 +158,9 @@ estimated_md: 1
         snapshot = json.loads(embedded)
         self.assertEqual(snapshot["date"], "2026-09-01")
         self.assertEqual(snapshot["periods"]["daily"]["summary"]["final_md"], 1)
+        self.assertEqual(snapshot["view"], "daily")
+        self.assertEqual(snapshot["periods"]["current"]["summary"]["count"], 1)
+        self.assertNotIn("now.md", [r["path"].rsplit("/", 1)[-1] for r in snapshot["periods"]["current"]["reports"]])
         self.assertFalse((self.root / "Dashboard" / "Archive" / "Daily" / "2026" / "10").exists())
         current = self.root / "Dashboard" / "Current" / "data.json"
         self.assertEqual(json.loads(current.read_text(encoding="utf-8")), data)
