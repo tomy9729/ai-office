@@ -7,7 +7,8 @@
 ```text
 Ticket: AO-YYYYMMDD-NNN
 Title: 짧고 구체적인 업무 제목
-Status: COMPLETED / PARTIAL / BLOCKED
+Work Status: COMPLETED / PARTIAL / BLOCKED
+Status (전체): COMPLETED / PARTIAL / BLOCKED
 Size: S / M / L
 Estimated MD: 업무량 추정값
 Final MD: 종료 시 보정값 (선택)
@@ -50,17 +51,18 @@ Implementation이 필요한 Bugfix에는 Implementer를 최소 1개 배정한다
 
 ## 담당자 목록 이름과 생성 인자 예시
 
-기본은 `[Role] · [Model Full Name] · [Task]`이며 명시적으로 요청한 모델 이름과 버전을 우선 사용한다. 새 생성마다 지원 모델을 task에 맞게 먼저 선택하고 model 인자로 명시 요청한다. 명시 요청을 지원하지 않는 도구에서는 확실하게 확인된 실제 상속 모델을 사용한다. 둘 다 불가능하면 제한을 보고하고 모델 없는 이름으로 생성하지 않는다. 요청 모델은 실제 적용 여부가 미확인이어도 제목과 task_name에 넣되 requested_model과 actual_model을 별도로 기록한다. 부모 상속을 확정 모델처럼 추측하지 않는다.
+기본은 `[Role] · [Model Full Name] · [Task]`이며 명시적으로 요청한 모델 이름과 버전을 우선 사용한다. 새 생성마다 지원 모델을 task에 맞게 먼저 선택하고 지원하는 도구에서는 model 인자로 명시 요청한다. 명시 요청을 지원하지 않는 도구에서는 확실하게 확인된 실제 상속 모델을 사용한다. 둘 다 불가능하면 `Role · Task`와 `role_action_target`으로 생성하고 확인 제한만 보고한다. 요청 모델은 실제 적용 여부가 미확인이어도 제목과 task_name에 넣되 requested_model과 actual_model을 별도로 기록한다. 부모 상속을 확정 모델처럼 추측하지 않는다.
 
 - `Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정`
 - `Reviewer · 6 Astra · Core 변경 diff·회귀 위험 검토`
 - `QA · 5.6 Luna · 설치·업데이트 절차 동작 검증`
 - `Explorer · 6.1 Sol · 로그인 API 호출 흐름 조사` (requested_model: gpt-6.1-sol, actual_model: 미확인)
 
-현재 collaboration.spawn_agent 호출의 task_name에 아래 이름을 실제로 전달하고 메시지·보고에 원래 제목을 병기한다. 모델 약칭은 family+점 없는 버전이며 task는 action+target으로 짧게 쓴다. 생성 전에 실제 Role, 모델 약칭과 명시 요청값의 일치(명시 요청 미지원이면 확인된 실제 모델과의 일치), action_target의 수행 내용과 대상을 확인한다. fork_turns는 none 또는 필요한 양의 이력 수로 지정하고 필요한 맥락을 메시지로 전달한다. all 때문에 모델 요청을 생략하지 않는다. 생성 직후 list_agents의 agent_name 경로가 전달한 task_name을 포함하는지 확인한다.
+현재 collaboration.spawn_agent 호출의 task_name에 아래 이름을 실제로 전달하고 메시지·보고에 원래 제목을 병기한다. 모델 약칭은 family+점 없는 버전이며 task는 action+target으로 짧게 쓴다. 생성 전에 실제 Role, 모델 약칭과 명시 요청값의 일치(요청이 없으면 확인된 실제 모델과 비교하며 둘 다 없으면 모델 검사 생략), action_target의 수행 내용과 대상을 확인한다. fork_turns는 none 또는 필요한 양의 이력 수로 지정하고 필요한 맥락을 메시지로 전달한다. all 때문에 모델 요청을 생략하지 않는다. 생성 직후 list_agents의 agent_name 경로가 전달한 task_name을 포함하는지 확인한다.
 
 | task_name | 표시 제목 |
 |---|---|
+| `explorer_trace_login_api` | Explorer · 로그인 API 호출 흐름 조사 (요청·실제 모델 미확인) |
 | `explorer_sol61_trace_login_api` | Explorer · 6.1 Sol · 로그인 API 호출 흐름 조사 |
 | `implementer_sol61_fix_ap_tree` | Implementer · 6.1 Sol · AP 트리 수정 |
 | `reviewer_astra6_review_chart_diff` | Reviewer · 6 Astra · 차트 diff 검토 |
@@ -74,7 +76,7 @@ Implementation이 필요한 Bugfix에는 Implementer를 최소 1개 배정한다
 ```text
 Ticket: [발급한 Ticket ID]
 Title: [업무 제목]
-task_name (실제 생성 인자): role_model_action_target (모델 필수)
+task_name (실제 생성 인자): role_model_action_target (모델 정보가 없으면 role_action_target)
 표시 제목: [Role] · [Model Full Name] · [Task]
 model (실제 생성 인자): task에 맞게 선택한 지원 모델
 fork_turns: none 또는 필요한 양의 이력 수
@@ -93,7 +95,7 @@ actual_model: 실제 확인값 또는 미확인
 ```text
 Ticket: [발급한 Ticket ID]
 Title: [업무 제목]
-task_name (실제 생성 인자): role_model_action_target (모델 필수)
+task_name (실제 생성 인자): role_model_action_target (모델 정보가 없으면 role_action_target)
 agent_name (list_agents 실제 관측 경로):
 이름 적용 확인: 일치 / 불일치 / 미확인 (전달한 task_name 포함 여부와 제한)
 표시 제목: [Role] · [Model Full Name] · [Task]
@@ -124,7 +126,7 @@ Max Parallel: [관측된 최대 동시 Agent 수; Main 제외]
 ## 짧은 완료 보고 예시
 
 ```text
-완료
+업무: COMPLETED · 기록: 완료 · 전체: COMPLETED
 검증: PASS · 변경 파일: 3개
 남은 사항: 없음
 ```
@@ -141,6 +143,7 @@ ticket: AO-YYYYMMDD-NNN
 title: 짧고 구체적인 업무 제목
 date: YYYY-MM-DD
 status: COMPLETED
+work_status: COMPLETED
 size: M
 estimated_md: 1.5
 final_md: 2.0
@@ -164,11 +167,15 @@ Ticket: [발급한 Ticket ID]
 ## 남은 사항
 ## 참여 Agent
 ## 상태
-COMPLETED / PARTIAL / BLOCKED
+업무: COMPLETED / PARTIAL / BLOCKED
+기록: 완료 / 미완료 / 차단 / 해당 없음
+전체: COMPLETED / PARTIAL / BLOCKED
+남은 조치: 없음 또는 구체적인 조치
 ```
 
-`INDEX.md`에는 보고서마다 `YYYY-MM-DD | Ticket ID | 제목 | 상태 | Size | MD | [[Reports/YYYY/MM/Ticket-ID-작업명]]` 한 줄을 추가한다. 기존 구조에 Ticket ID를 추가하며 과거 행은 소급 변경하지 않는다. 같은 티켓의 후속 결과는 해당 행을 갱신한다. 과거 작업을 찾을 때는 INDEX를 먼저 읽고 관련 보고만 연다.
+`INDEX.md`에는 보고서마다 `YYYY-MM-DD | Ticket ID | 제목 | 전체 상태 | 업무 상태 | Size | MD | [[Reports/YYYY/MM/Ticket-ID-작업명]]` 한 줄을 추가한다. 기존 구조에 Ticket ID를 추가하며 과거 행은 소급 변경하지 않는다. 같은 티켓의 후속 결과는 해당 행을 갱신한다. 과거 작업을 찾을 때는 INDEX를 먼저 읽고 관련 보고만 연다.
 
 중요한 아키텍처·API·상태 관리·공통 규칙·후속 기술 선택이나 기존 방식에서 새 방식으로 바꾼 결정만 `Decisions/DECISIONS.md`에 Ticket ID, 이유와 관련 보고 링크를 남긴다. 보고서 전체를 복제하지 않는다. 예: `- YYYY-MM-DD | Ticket: AO-YYYYMMDD-NNN | 결정: 새 방식 채택 | 이유: ... | 보고: [[Reports/YYYY/MM/Ticket-ID-작업명]]`
 
 metadata에는 실제 확인된 값만 기록한다. `agents`는 실제 참여 역할, `models`는 확인된 실제 모델만 담으며 요청 모델은 본문의 requested_model에 분리한다. 알 수 없는 Size·MD·project·type은 생략하거나 null로 두고 과거 데이터를 임의로 채우지 않는다. `final_md`는 선택 사항이며 INDEX는 final_md, 없으면 estimated_md를 사용한다. 공수 차이가 크면 Report에 짧은 이유를 추가할 수 있다. 저장·색인·Decision 갱신 뒤 Workspace 규칙의 generator를 실행한다.
+업무 상태는 구현·리뷰·검증·Main 통합·최종 응답 준비와 Core 변경의 commit·push를 기준으로 기록한다. Dashboard 생성 직전 Report·INDEX에 전체 완료 예정 값을 반영하고 성공 후에만 완료를 선언한다. 실패하면 전체 상태를 PARTIAL/BLOCKED로 복구하고 업무 상태를 보존한다. 복구 저장 실패도 대화에 명시한다. 과거 업무 상태는 추정하지 않는다.

@@ -37,7 +37,7 @@ MD(Man-Day)는 업무의 상대적 작업량을 사람 기준 공수로 환산�
 
 ## metadata와 생성
 
-Report 상단 YAML은 ticket, title, date, status, size, estimated_md, final_md, project, type, agents, models를 사용한다. 본문은 기존 구조를 유지한다. status는 COMPLETED/PARTIAL/BLOCKED, date는 report_timezone의 YYYY-MM-DD, MD는 음수가 아닌 숫자다. agents/models는 실제 참여 역할과 확인된 실제 모델을 배열로 기록한다. 요청 모델은 본문에 requested_model로 분리하고 실제 모델을 추측하지 않는다. type: core는 Core 개선 집계에 사용한다. 구체 예시는 [templates.md](templates.md)를 따른다.
+Report 상단 YAML은 ticket, title, date, status, work_status, size, estimated_md, final_md, project, type, agents, models를 사용한다. 본문은 기존 구조를 유지한다. status는 기록을 포함한 전체 상태, work_status는 업무 상태이며 COMPLETED/PARTIAL/BLOCKED다. work_status 누락·null은 UNKNOWN이고 과거 status에서 추정하지 않는다. 파생 JSON schema_version은 2다. date는 report_timezone의 YYYY-MM-DD, MD는 음수가 아닌 숫자다. agents/models는 실제 참여 역할과 확인된 실제 모델을 배열로 기록한다. 요청 모델은 본문에 requested_model로 분리하고 실제 모델을 추측하지 않는다. type: core는 Core 개선 집계에 사용한다. 구체 예시는 [templates.md](templates.md)를 따른다.
 
 흐름: 업무 수행 → Report 저장 → INDEX·필요한 Decision 갱신 → generator 실행 → Current 및 해당 일·주·월 Archive 갱신. Markdown만 원본이며 data.json과 HTML은 파생 결과물이다. Report가 없거나 과거 metadata가 빠져도 오류 없이 별도 표시하거나 해당 지표에서 제외한다. 없는 MD를 0으로 간주하거나 분모에 넣어 평균을 낮추지 않는다. 업무당 평균은 final_md 우선, 기존 md 호환값, estimated_md 순서로 값이 있는 업무만 분모에 넣는다. Decision은 기존 날짜·Ticket·Report 링크의 Markdown 기록에서 읽으며 임의 날짜를 만들지 않는다.
 
@@ -51,7 +51,7 @@ generator의 YAML 지원 범위는 flat scalar와 `agents`/`models`의 scalar bl
 
 HTML Dashboard의 목적은 브라우저의 레이아웃·시각화·상태 관리·상호작용을 활용하여 AI Office 데이터를 탐색·분석하는 운영 UI를 제공하는 것이다. 정적 보고서처럼 모든 정보를 한 화면에 나열하지 않는다. 첫 화면은 간결하게, 필요한 정보는 깊게 탐색하게 구성하며 기록이 늘어도 검색·정렬·필터·페이지 이동으로 사용할 수 있어야 한다.
 
-단일 HTML 안에서 Overview(주요 KPI·Completion·Workload Trend·Project Workload·최근 업무·주요 결정), Analytics(MD·Estimated vs Final·Project·Size·Role·Model), History(전체 업무·Decision Timeline·Core Changes), Health(Metadata·MD·Ticket·Project·Size Coverage) view를 전환한다. 모든 업무 차트와 목록은 같은 Project·Status·Size·Role·Model·날짜 범위·검색 상태를 사용한다. 차트/legend 클릭과 키보드 Enter/Space는 같은 필터를 변경하고 chip으로 적용 조건과 제거 동작을 표시하며 한 번에 초기화할 수 있다. 날짜 trend는 날짜 선택을 목록으로 연결한다. Health의 미기록 선택도 해당 업무 목록으로 연결한다. Decision에 업무 관계를 추정하지 않으며 기간·날짜만 적용한다고 표시한다.
+단일 HTML 안에서 Overview(주요 KPI·Completion·Workload Trend·Project Workload·최근 업무·주요 결정), Analytics(MD·Estimated vs Final·Project·Size·Role·Model), History(전체 업무·Decision Timeline·Core Changes), Health(Metadata·MD·Ticket·Project·Size Coverage) view를 전환한다. 모든 업무 차트와 목록은 같은 Project·전체 상태·업무 상태·Size·Role·Model·날짜 범위·검색 상태를 사용한다. 차트/legend 클릭과 키보드 Enter/Space는 같은 필터를 변경하고 chip으로 적용 조건과 제거 동작을 표시하며 한 번에 초기화할 수 있다. 날짜 trend는 날짜 선택을 목록으로 연결한다. Health의 미기록 선택도 해당 업무 목록으로 연결한다. Decision에 업무 관계를 추정하지 않으며 기간·날짜만 적용한다고 표시한다.
 
 브라우저에서 집계하고 SVG donut·trend·Estimated/Final scatter와 업무 상세 dialog를 제공한다. null MD는 미기록이고 0은 기록된 값이다. 평균·차이 분석은 실제 값이 있는 업무만 계산한다. Metadata Coverage는 frontmatter 존재 여부이며 모든 필드의 완전성을 뜻하지 않는다. Role/Model 참여 횟수는 해당 목록이 있는 업무 수이며 요청 모델이나 미확인 모델을 집계하지 않는다. 원본 Markdown은 textContent로 표시하고 JSON은 script 종료 태그를 안전하게 escape한다. 외부 CDN·fetch·서버·새 framework 의존 없이 file:// 및 offline 실행을 유지한다. library 금지 자체가 목표는 아니며 표현력·유지보수성의 실익이 있다면 정적 asset bundle을 고려한다.
 
@@ -63,3 +63,9 @@ Archive는 Daily 하루 하나, Weekly ISO 주 하나, Monthly 월 하나로 갱
 ## 기존 기록 이동
 
 환경별 기존 AI Office 폴더만 대상으로 원본·대상 경로 containment를 확인한다. 대상이 있으면 덮어쓰지 않고 충돌을 보고한다. 이동 전후 파일 목록·해시·주요 파일 존재를 확인하고 프로젝트/개인 지식 폴더는 수정·이동하지 않는다. 혼합 README는 원본을 보존하고 Workspace 색인과 상위 참고자료 색인으로 분리한다. 기존 Report·Decision·INDEX의 상대 링크는 같은 내부 구조를 유지한다. 과거 metadata·Ticket을 임의로 채우지 않는다.
+
+## 업무와 기록 완료
+
+기존 상태 필터·완료율은 전체 상태 기준이다. 업무 상태 필터와 목록·상세의 두 상태를 제공한다. work_status=COMPLETED인데 전체가 미완료이면 `업무 완료 · 기록 미완료`로 표시한다. 과거 항목이나 업무 미완료 항목에서 기록 완료를 역산하지 않으며 실패 단계는 Report 본문에서 확인한다.
+
+Dashboard 생성 직전 Report·INDEX에 전체 완료 예정 값을 반영하고 성공 후에만 완료를 선언한다. 실패 시 전체 상태를 PARTIAL/BLOCKED로 되돌리되 업무 상태는 보존한다. 되돌림 저장도 실패하면 대화에 실제 결과와 기록 불일치를 명시한다. generator는 Report·INDEX를 수정하지 않는다.

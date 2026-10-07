@@ -109,9 +109,12 @@ def report(root, path):
     if date_value:
         date_value = date.fromisoformat(str(date_value)).isoformat()
     status = metadata.get("status") or (legacy_status[1] if legacy_status else "UNKNOWN")
+    work_status = metadata.get("work_status") or "UNKNOWN"
     size = metadata.get("size") or "UNKNOWN"
     if status not in ("COMPLETED", "PARTIAL", "BLOCKED", "UNKNOWN"):
         raise ValueError("status must be COMPLETED, PARTIAL, BLOCKED or absent")
+    if work_status not in ("COMPLETED", "PARTIAL", "BLOCKED", "UNKNOWN"):
+        raise ValueError("work_status must be COMPLETED, PARTIAL, BLOCKED or absent")
     if size not in ("S", "M", "L", "UNKNOWN"):
         raise ValueError("size must be S, M, L or absent")
     lists = {}
@@ -126,7 +129,7 @@ def report(root, path):
     final = md_value(metadata.get("final_md"), "final_md")
     legacy_md = md_value(metadata.get("md"), "md")
     representative = final if final is not None else legacy_md if legacy_md is not None else estimated
-    return dict(ticket=metadata.get("ticket") or (legacy_ticket[1] if legacy_ticket else None), title=title, date=date_value, status=status,
+    return dict(ticket=metadata.get("ticket") or (legacy_ticket[1] if legacy_ticket else None), title=title, date=date_value, status=status, work_status=work_status,
                 size=size, estimated_md=estimated, final_md=final, md=representative,
                 project=metadata.get("project") or "UNKNOWN", type=metadata.get("type") or "UNKNOWN",
                 path=path.relative_to(root).as_posix(), metadata=has_metadata, content=text, **lists)
@@ -195,7 +198,7 @@ def summary(reports, decisions):
         return [dict(label=key, count=len(rows), md=round(sum(r["md"] for r in rows if r["md"] is not None), 4)
                      if any(r["md"] is not None for r in rows) else None) for key, rows in sorted(groups.items())]
     count = len(reports)
-    return dict(count=count, status=counts("status"), size=counts("size"), projects=counts("project"),
+    return dict(count=count, status=counts("status"), work_status=counts("work_status"), size=counts("size"), projects=counts("project"),
                 project_md={key: round(sum(r["md"] for r in rows if r["md"] is not None), 4)
                             if any(r["md"] is not None for r in rows) else None for key, rows in sorted(projects.items())},
                 estimated_md=total("estimated_md"), final_md=total("final_md"), total_md=total("md"),
@@ -222,7 +225,7 @@ def dataset(reports, decisions, today, timezone):
         choices = [d for d in decisions if includes(d)]
         periods[key] = dict(reports=rows, decisions=choices, summary=summary(rows, choices),
                             start=start.isoformat() if start else None, end=end.isoformat() if end else None)
-    return dict(schema_version=1, date=today.isoformat(), timezone=timezone,
+    return dict(schema_version=2, date=today.isoformat(), timezone=timezone,
                 today_count=periods["daily"]["summary"]["count"], periods=periods)
 
 

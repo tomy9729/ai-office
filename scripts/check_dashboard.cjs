@@ -11,7 +11,7 @@ class Element {
   showModal(){this.open=true} close(){this.open=false}
 }
 const ids=Object.fromEntries(['data','content','cards','tabs','filters','chips','subtitle','archives','detail','detail-body','close'].map(id=>[id,new Element('div')]));
-const rows=Array.from({length:28},(_,i)=>({title:'Task '+i,ticket:'AO-'+i,date:i===27?null:'2026-10-'+String(1+i%7).padStart(2,'0'),status:i%2?'PARTIAL':'COMPLETED',size:i%2?'L':'S',estimated_md:i===0?0:null,final_md:i===0?0:i===1?2:null,md:i===0?0:i===1?2:null,project:i%2?'beta':'alpha',agents:i%2?['Reviewer']:['Implementer'],models:['actual'],metadata:i!==27,path:'Reports/'+i+'.md',url:'../Reports/'+i+'.md',type:i===0?'core':'task',content:'# Task '+i}));
+const rows=Array.from({length:28},(_,i)=>({title:'Task '+i,ticket:'AO-'+i,date:i===27?null:'2026-10-'+String(1+i%7).padStart(2,'0'),status:i%2?'PARTIAL':'COMPLETED',work_status:i===27?'UNKNOWN':'COMPLETED',size:i%2?'L':'S',estimated_md:i===0?0:null,final_md:i===0?0:i===1?2:null,md:i===0?0:i===1?2:null,project:i%2?'beta':'alpha',agents:i%2?['Reviewer']:['Implementer'],models:['actual'],metadata:i!==27,path:'Reports/'+i+'.md',url:'../Reports/'+i+'.md',type:i===0?'core':'task',content:'# Task '+i}));
 ids.data.textContent=JSON.stringify({view:'current',date:'2026-10-07',timezone:'UTC',navigation:{current:'index.html'},periods:Object.fromEntries(['current','daily','weekly','monthly'].map(k=>[k,{reports:rows,decisions:Array.from({length:7},(_,i)=>({date:'2026-10-07',text:'Decision '+i,url:'../Decisions/DECISIONS.md'})),start:null,end:null}]))});
 const events={},location={_hash:'',get hash(){return this._hash},set hash(v){this._hash='#'+v.replace(/^#/,'');events.hashchange?.()}};
 const context=vm.createContext({document:{getElementById:id=>ids[id],createElement:tag=>new Element(tag),createElementNS:(_,tag)=>new Element(tag)},window:{addEventListener:(k,f)=>events[k]=f},location,URLSearchParams,console});
@@ -39,6 +39,10 @@ find(ids.content,'다음').click();assert.equal(evalJS('state.page'),2);assert.e
 // Sorting and detail dialog use the same records.
 find(ids.content,'대표 MD').click();assert.equal(evalJS('state.sort'),'md');assert.equal(evalJS('state.page'),1);
 const task=all(ids.content).find(n=>n.className==='title-button');task.click();assert(ids.detail.open);assert.match(text(ids['detail-body']),/# Task/);ids.close.click();assert(!ids.detail.open);
+location.hash='view=history&work_status=COMPLETED';assert.equal(evalJS('visible.length'),27);assert.match(text(ids.content),/업무 완료 · 기록 미완료/);assert.match(text(ids.chips),/work_status: COMPLETED/);assert.equal(evalJS("decodeState('#'+encodeState(state)).work_status"),'COMPLETED');
+find(ids.content,'업무 상태').click();assert.equal(evalJS('state.sort'),'work_status');
+location.hash='view=history&work_status=UNKNOWN';assert.equal(evalJS('visible.length'),1);
+find(ids.chips,'필터 초기화').click();
 // Back/forward hash restoration is handled by the browser hashchange event.
 location.hash='view=analytics&project=beta&role=Reviewer&model=actual&size=L';assert.equal(evalJS('visible.length'),14);assert.match(text(ids.content),/Estimated vs Final/);
 location.hash='view=health&health=md';assert.equal(evalJS('visible.length'),26);assert.match(text(ids.chips),/health: md/);

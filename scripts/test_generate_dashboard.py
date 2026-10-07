@@ -106,7 +106,7 @@ estimated_md: 1
         dashboard.generate(self.root, date(2026, 10, 7), "UTC", current_date=date(2026, 10, 7))
         current = self.root / "Dashboard" / "Current" / "index.html"
         original = current.read_bytes()
-        for malformed in ("estimated_md: NaN", "final_md: -1", "size: XL", "status: DONE",
+        for malformed in ("estimated_md: NaN", "final_md: -1", "size: XL", "status: DONE", "work_status: DONE",
                           "date: 2026-99-01", "models: requested-model", "date: 2026-10-07\ndate: 2026-10-08",
                           "title: |", "title: unquoted: colon"):
             with self.subTest(malformed=malformed):
@@ -130,9 +130,35 @@ estimated_md: 1
         self.assertIsNone(summary["estimated_md"])
         self.assertEqual(summary["project_md"], {"UNKNOWN": None})
         self.assertEqual(summary["completion_rate"], 100)
+        self.assertEqual(summary["work_status"], {"UNKNOWN": 1})
+        self.assertEqual(data["schema_version"], 2)
         self.assertEqual(data["periods"]["daily"]["reports"][0]["ticket"], "AO-legacy")
         dashboard.generate(self.root, date(2027, 1, 1), "UTC", current_date=date(2027, 1, 1))
         self.assertTrue((self.root / "Dashboard" / "Archive" / "Weekly" / "2026" / "2026-W53.html").exists())
+
+    def test_work_status_and_failed_generation_preserves_work(self):
+        path = self.write("work.md", "---\nstatus: PARTIAL\nwork_status: COMPLETED\n---\n")
+        data = dashboard.generate(self.root, date(2026, 10, 7), "UTC", current_date=date(2026, 10, 7))
+        row = data["periods"]["current"]["reports"][0]
+        self.assertEqual((row["status"], row["work_status"]), ("PARTIAL", "COMPLETED"))
+        snapshots = {p: p.read_bytes() for p in (self.root / "Dashboard").rglob("*") if p.is_file()}
+        self.write("bad.md", "---\nwork_status: DONE\n---\n")
+        with self.assertRaises(ValueError):
+            dashboard.generate(self.root, date(2026, 10, 7), "UTC", current_date=date(2026, 10, 7))
+        self.assertEqual(snapshots, {p: p.read_bytes() for p in (self.root / "Dashboard").rglob("*") if p.is_file()})
+        self.assertEqual(dashboard.report(self.root, path)["work_status"], "COMPLETED")
+        for value in ("COMPLETED", "PARTIAL", "BLOCKED", "null"):
+            path = self.write("work.md", "---\nwork_status: " + value + "\n---\n")
+            self.assertEqual(dashboard.report(self.root, path)["work_status"], "UNKNOWN" if value == "null" else value)
+
+    def test_operating_docs_allow_missing_display_information(self):
+        core = Path(__file__).resolve().parent.parent
+        for name in ("SKILL.md", "README.md", "references/templates.md"):
+            text = (core / name).read_text(encoding="utf-8")
+            self.assertIn("role_action_target", text)
+            self.assertNotIn("모델 없는 이름으로 생성하지", text)
+            self.assertNotIn("모델 없는 제목으로 생성하지", text)
+        self.assertIn("이름 관측 실패", (core / "SKILL.md").read_text(encoding="utf-8"))
 
     def test_workspace_boundary(self):
         with self.assertRaises(ValueError):

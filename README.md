@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.4.0**
+Version: **0.5.0**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -22,7 +22,7 @@ Main은 요구 분석, 코드 읽기, 계획, 영향 판단, 역할·모델 선�
 
 역할 정의는 [roles/](roles)에 있습니다. 현재 runtime이 제공하는 agent_type을 선택하거나, 선택 기능이 없으면 역할의 developer_instructions를 할당 메시지에 전달합니다. 없는 API를 만들지 않으며 위임이 불가능한 경우 제한을 보고합니다. child는 배정된 결과를 보고한 뒤 task를 끝내고 Office를 다시 구성하지 않습니다. 후속 일은 기존 agent를 재사용하며 runtime 종료 기능은 제공되는 범위에서만 사용합니다.
 
-Sub Agent 목록의 실제 인스턴스 이름에 `[Role] · [Model Full Name] · [Task]`를 적용합니다. 예: `Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정`. 새 생성마다 task에 맞는 지원 모델을 먼저 선택하고 model 인자로 명시 요청합니다. 명시 요청을 지원하지 않는 도구에서는 확실하게 확인된 실제 상속 모델을 사용하며, 둘 다 불가능하면 제한을 보고하고 모델 없는 이름으로 생성하지 않습니다. fork_turns는 none 또는 필요한 양의 이력 수로 지정해 필요한 맥락을 전달합니다. 요청 모델의 실제 적용 여부는 requested_model과 actual_model로 분리해 보고합니다. 현재 runtime은 생성 인자 task_name에 `role_model_action_target`을 필수로 넣으며 모델 약칭은 family 뒤에 버전의 점을 제거해 붙입니다(예: `implementer_sol61_fix_ap_tree`, `reviewer_astra6_review_chart_diff`). 생성 전에 실제 Role, 모델 약칭과 명시 요청값의 일치(명시 요청 미지원이면 확인된 실제 모델과의 일치), action_target을 확인하고 생성 직후 list_agents의 agent_name 경로를 확인합니다. 정확한 UI 표시에는 제한이 있습니다. 상세 규칙과 제한은 [SKILL.md](SKILL.md), 생성 인자 예시는 [templates.md](references/templates.md)에 있습니다.
+Sub Agent 목록의 실제 인스턴스 이름에 `[Role] · [Model Full Name] · [Task]`를 적용합니다. 예: `Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정`. 새 생성마다 task에 맞는 지원 모델을 먼저 선택하고 지원하는 도구에서는 model 인자로 명시 요청합니다. 명시 요청을 지원하지 않는 도구에서는 확실하게 확인된 실제 상속 모델을 사용하며, 둘 다 불가능하면 `Role · Task`와 `role_action_target`으로 생성하고 정보 확인 제한만 보고합니다. fork_turns는 none 또는 필요한 양의 이력 수로 지정해 필요한 맥락을 전달합니다. 요청 모델의 실제 적용 여부는 requested_model과 actual_model로 분리해 보고합니다. 현재 runtime은 생성 인자 task_name에 `role_model_action_target`을 기본으로 넣으며 모델 약칭은 family 뒤에 버전의 점을 제거해 붙입니다(예: `implementer_sol61_fix_ap_tree`, `reviewer_astra6_review_chart_diff`). 생성 전에 실제 Role, 모델 약칭과 명시 요청값의 일치(요청이 없으면 확인된 실제 모델과 비교하며 둘 다 없으면 모델 검사 생략), action_target을 확인하고 생성 직후 list_agents의 agent_name 경로를 확인합니다. 정확한 UI 표시에는 제한이 있습니다. 상세 규칙과 제한은 [SKILL.md](SKILL.md), 생성 인자 예시는 [templates.md](references/templates.md)에 있습니다.
 
 ## Workflow와 Execution Plan
 
@@ -39,6 +39,10 @@ Core는 기록 방법과 템플릿을 관리하고, 외부 AI Office Workspace�
 범용 역할·모델 선택·위임, Plan·Review·QA, 완료·보고 방법과 설치 연결의 변경은 Core Git 대상입니다. 일반 업무의 보고서·INDEX·결정 기록 갱신만으로는 AI Office Git 변경·commit·push가 필요하지 않습니다.
 
 ## Completion State와 Reporting
+
+`work_status`는 업무 상태, 기존 `status`는 기록까지 포함한 전체 상태입니다. 업무 완료에는 구현·필요한 리뷰·검증·Main 통합·최종 응답 준비와 Core 변경 시 commit·push를 포함합니다. 업무·기록·전체 상태·남은 조치를 따로 보고하며 Workspace 미설정이면 기록은 `해당 없음`입니다. 업무 완료 후 기록이 남으면 전체 PARTIAL, 기록 진행을 막는 조건이면 BLOCKED입니다.
+
+모델 지정 불가·실제 모델 미확인·이름 관측 실패·UI 표시 불일치는 실행을 중단하지 않습니다. 위임 도구나 필요한 실행 권한 자체의 부재는 blocker입니다.
 
 - **COMPLETED**: 구현·필요한 리뷰·실제 검증·Main 통합·최종 보고 및 설정된 기록 갱신, Dashboard 갱신과 Core 변경 시 commit·push가 모두 끝남.
 - **PARTIAL**: 남은 일이 있으며 완료를 선언할 수 없음.
@@ -63,7 +67,7 @@ report_timezone은 사용자의 날짜 기준입니다. 없으면 제공된 현�
 
 Size는 업무 범위와 투입 규모이며 S(명확한 단일 변경), M(여러 파일·역할), L(넓은 영향·여러 단계)만 사용합니다. 난이도·모델 역량·직급을 뜻하지 않습니다. MD는 업무량을 사람 기준 공수로 환산한 추정치이며 실행 시간·Token·모델 성능으로 계산하지 않습니다. Plan에는 Size와 estimated_md, Report에는 YAML metadata와 선택적인 final_md를 기록합니다. INDEX는 final_md를 우선합니다.
 
-Markdown Report → metadata 집계 → data.json → 인터랙티브 HTML 순서이며 Report가 원본입니다. Current와 일·주·월별 Archive는 인터넷·CDN·서버 없이 file://로 여는 단일 HTML Operations Console입니다. Overview / Analytics / History / Health로 전환하며 차트와 업무 목록은 Project·Status·Size·Role·Model·날짜·검색 상태를 공유합니다. 필터 chip·초기화, 정렬·페이지 이동, 업무 상세 dialog, URL hash의 탐색 상태 복원과 뒤로/앞으로 이동을 지원합니다. Decision은 날짜만 적용하며 연결 없는 업무 metadata를 추정하지 않습니다. Dashboard의 목적·설계 기준은 [Workspace 규칙](references/workspace.md)에 유지합니다. 과거 metadata가 없으면 별도 표시하거나 해당 집계에서 제외하며 추정하지 않습니다.
+Markdown Report → metadata 집계 → data.json → 인터랙티브 HTML 순서이며 Report가 원본입니다. Current와 일·주·월별 Archive는 인터넷·CDN·서버 없이 file://로 여는 단일 HTML Operations Console입니다. Overview / Analytics / History / Health로 전환하며 차트와 업무 목록은 Project·전체 상태·업무 상태·Size·Role·Model·날짜·검색 상태를 공유합니다. 필터 chip·초기화, 정렬·페이지 이동, 업무 상세 dialog, URL hash의 탐색 상태 복원과 뒤로/앞으로 이동을 지원합니다. Decision은 날짜만 적용하며 연결 없는 업무 metadata를 추정하지 않습니다. Dashboard의 목적·설계 기준은 [Workspace 규칙](references/workspace.md)에 유지합니다. 과거 metadata가 없으면 별도 표시하거나 해당 집계에서 제외하며 추정하지 않습니다.
 
 ```powershell
 python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone Asia/Seoul
@@ -71,6 +75,8 @@ python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone A
 ```
 
 Report·INDEX·필요한 Decision 저장 뒤 실행합니다. `--date`는 스냅샷 기간의 기준일이고 기본값은 지정 timezone의 현재 날짜입니다. 해당 일·주·월 파일 하나씩을 갱신합니다. DB·서버·watcher·실시간 Agent 상태 수집은 추가하지 않습니다. 상세 규칙과 제한은 [Workspace 규칙](references/workspace.md), metadata 예시는 [템플릿](references/templates.md)을 따릅니다.
+
+0.5.0은 표시 정보 fallback과 업무·전체 상태 분리, Dashboard 업무 상태 탐색을 추가한 MINOR 변경입니다.
 
 0.4.0은 단일 HTML의 Operations Console과 연결된 데이터 탐색을 추가한 MINOR 변경입니다.
 
