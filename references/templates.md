@@ -87,6 +87,8 @@ task_name (실제 생성 인자): role_model_task / 실제 모델 확인 불가 
 Ticket: [발급한 Ticket ID]
 Title: [업무 제목]
 task_name (실제 생성 인자): role_model_task / 실제 모델 확인 불가 시 role_task
+agent_name (list_agents 실제 관측 경로):
+이름 적용 확인: 일치 / 불일치 / 미확인 (전달한 task_name 포함 여부와 제한)
 표시 제목: [Role] · [Model Full Name] · [Task] / 실제 모델 확인 불가 시 [Role] · [Task]
 모델 (요청 / 실제 확인):
 Role / task:
