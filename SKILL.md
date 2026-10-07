@@ -47,7 +47,10 @@ Team은 원팀이며, 담당자 구성은 고정 절차가 아닌 [조합 예시
 
 - 기본 제목은 반드시 `[Role] · [Model Full Name] · [Task]`입니다. Role은 실제 담당 직무를 쓰고 Model Full Name은 버전을 포함한 실제 모델 이름(예: 6.1 Sol, 6 Astra, 5.6 Luna)을 씁니다. 임의 모델 이름을 만들지 않으며 요청값과 실제 확인값을 구분합니다. 실제 모델을 확인하지 못하면 제목에는 `모델 미확정`을 쓰고 요청값은 별도로 보고합니다.
 - Task는 짧고 구체적인 대상과 수행 내용으로 적어 한 줄에서 직무·모델·범위를 파악하게 합니다. `core update`, `verify`, `review`, `fix`, `investigate`, `docs`, `test`처럼 대상이나 내용이 불명확한 제목은 피합니다.
-- runtime이 표시 제목 기능을 제공하면 이 형식을 적용합니다. 현재 collaboration.spawn_agent의 task_name은 소문자 identifier 제약이 있으므로 식별자는 해당 제약을 따르고 표시 제목은 할당 메시지와 보고에 적용합니다. 제목 API가 없으면 만들지 말고 UI 표시 제한을 보고합니다. 예시는 [템플릿](references/templates.md)을 따릅니다.
+- 적용 대상은 runtime의 Sub Agent 목록에 표시되는 실제 인스턴스 이름입니다. 표시 이름/title 인자가 있으면 위 형식을 직접 전달합니다. 메시지·보고에만 제목을 적고 목록에도 적용됐다고 보고하지 않습니다.
+- 현재 collaboration.spawn_agent의 task_name에는 반드시 `role_model_task`를 반영합니다. 각 부분은 ASCII 소문자·숫자·밑줄의 구체적인 영문 snake_case로 쓰고 모델 버전을 보존합니다(`6.1 Sol` → `6_1_sol`). 실제 모델을 확인하지 못하면 `model_unconfirmed`를 쓰고 요청 모델은 별도로 기록합니다. 할당 메시지와 보고에는 원래 한국어·가운뎃점 제목을 병기합니다. 예시는 [템플릿](references/templates.md)을 따릅니다.
+- 현재 list_agents의 agent_name은 task_name을 포함한 경로이며 메시지의 표시 제목과 별개입니다. 앱 UI가 이름을 변환할 수 있으므로 한국어·가운뎃점·소수점의 정확한 표시를 보장하지 않습니다. 생성 인자에 규칙을 적용한 사실과 정확한 UI 형식의 미확인·미지원 제한을 구분해 보고합니다.
+- 새로 생성하는 agent부터 적용합니다. 현재 도구에는 기존 인스턴스 이름 변경 API가 없으므로 없는 setter나 우회를 만들지 않습니다. 상위 chat의 set_thread_title을 Sub Agent 목록 이름 변경으로 사용하지 않습니다.
 
 ## Agent 실행과 종료
 

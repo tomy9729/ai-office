@@ -41,7 +41,7 @@ Implementation이 필요한 Bugfix에는 Implementer를 최소 1개 배정한다
 
 `[Role] · [Model Full Name] · [Task]` — [모델 선택 근거와 요청/확인 구분] — [결과/검증]
 
-## 담당자 표시 제목 예시
+## 담당자 목록 이름과 생성 인자 예시
 
 기본은 `[Role] · [Model Full Name] · [Task]`이며 실제 확인된 모델 이름과 버전을 사용한다. 요청 모델만 알고 실제 모델을 확인하지 못하면 제목은 `모델 미확정`으로 쓰고 요청값은 별도로 기록한다.
 
@@ -50,13 +50,22 @@ Implementation이 필요한 Bugfix에는 Implementer를 최소 1개 배정한다
 - `QA · 5.6 Luna · 설치·업데이트 절차 동작 검증`
 - `Explorer · 모델 미확정 · 로그인 API 호출 흐름 조사` (요청 모델: 6.1 Sol, 실제 확인: 미확정)
 
-작성·runtime 적용 규칙은 [SKILL.md](../SKILL.md)의 담당자 표시 제목을 따른다.
+현재 collaboration.spawn_agent 호출의 task_name에 아래 이름을 실제로 전달하고 메시지·보고에 원래 제목을 병기한다. 확인 모델 예시와 미확정 예시를 구분한다.
+
+| task_name | 표시 제목 |
+|---|---|
+| `implementer_6_1_sol_ai_office_agent_list_name_rules_update` | Implementer · 6.1 Sol · AI Office 목록 이름 규칙 수정 |
+| `qa_5_6_luna_install_update_flow_check` | QA · 5.6 Luna · 설치·업데이트 절차 동작 검증 |
+| `explorer_model_unconfirmed_codex_agent_list_name_trace` | Explorer · 모델 미확정 · Codex Agent 목록 이름 흐름 조사 |
+
+작성·runtime 적용과 정확한 UI 표시의 제한은 [SKILL.md](../SKILL.md)의 담당자 표시 제목을 따른다.
 
 ## Agent 할당
 
 ```text
 Ticket: [발급한 Ticket ID]
 Title: [업무 제목]
+task_name (실제 생성 인자): role_model_task
 표시 제목: [Role] · [Model Full Name] · [Task]
 모델 (요청 / 실제 확인):
 역할 / 목적:
@@ -72,6 +81,7 @@ Title: [업무 제목]
 ```text
 Ticket: [발급한 Ticket ID]
 Title: [업무 제목]
+task_name (실제 생성 인자): role_model_task
 표시 제목: [Role] · [Model Full Name] · [Task]
 모델 (요청 / 실제 확인):
 Role / task:
@@ -89,8 +99,8 @@ Ticket: [발급한 Ticket ID]
 
 | Agent identifier / 표시 제목 | Role | Task | Model (requested / confirmed) | Complexity | Result |
 |---|---|---|---|---|---|
-| explorer_flow / Explorer · 6.1 Sol · 로그인 API 호출 흐름 조사 | Explorer | 조사 범위 | 6.1 Sol / 6.1 Sol 확인 | 선택 | 완료 및 근거 |
-| implementer_core / Implementer · 모델 미확정 · AI Office Core 보고 규칙 수정 | Implementer | 수정 범위 | 6.1 Sol / 미확정 | 선택 | 변경 및 검증 |
+| explorer_6_1_sol_login_api_call_flow_trace / Explorer · 6.1 Sol · 로그인 API 호출 흐름 조사 | Explorer | 조사 범위 | 6.1 Sol / 6.1 Sol 확인 | 선택 | 완료 및 근거 |
+| implementer_model_unconfirmed_ai_office_core_report_rules_update / Implementer · 모델 미확정 · AI Office Core 보고 규칙 수정 | Implementer | 수정 범위 | 6.1 Sol / 미확정 | 선택 | 변경 및 검증 |
 
 Max Parallel: [관측된 최대 동시 Agent 수; Main 제외]
 
