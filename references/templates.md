@@ -48,14 +48,14 @@ Implementation이 필요한 Bugfix에는 Implementer를 최소 1개 배정한다
 
 ## 담당자 목록 이름과 생성 인자 예시
 
-기본은 `[Role] · [Model Full Name] · [Task]`이며 명시적으로 요청한 모델 이름과 버전을 우선 사용한다. 요청이 없으면 확인된 실제 모델을 사용하고 둘 다 모르면 `[Role] · [Task]`로 쓴다. 요청 모델은 실제 적용 여부가 미확인이어도 제목과 task_name에 넣되 requested_model과 actual_model을 별도로 기록한다. 부모 상속을 확정 모델처럼 추측하지 않는다.
+기본은 `[Role] · [Model Full Name] · [Task]`이며 명시적으로 요청한 모델 이름과 버전을 우선 사용한다. 새 생성마다 지원 모델을 task에 맞게 먼저 선택하고 model 인자로 명시 요청한다. 명시 요청을 지원하지 않는 도구에서는 확실하게 확인된 실제 상속 모델을 사용한다. 둘 다 불가능하면 제한을 보고하고 모델 없는 이름으로 생성하지 않는다. 요청 모델은 실제 적용 여부가 미확인이어도 제목과 task_name에 넣되 requested_model과 actual_model을 별도로 기록한다. 부모 상속을 확정 모델처럼 추측하지 않는다.
 
 - `Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정`
 - `Reviewer · 6 Astra · Core 변경 diff·회귀 위험 검토`
 - `QA · 5.6 Luna · 설치·업데이트 절차 동작 검증`
 - `Explorer · 6.1 Sol · 로그인 API 호출 흐름 조사` (requested_model: gpt-6.1-sol, actual_model: 미확인)
 
-현재 collaboration.spawn_agent 호출의 task_name에 아래 이름을 실제로 전달하고 메시지·보고에 원래 제목을 병기한다. 모델 약칭은 family+점 없는 버전이며 task는 action+target으로 짧게 쓴다. 요청 모델·확인 모델·모델 생략 예시는 보고에서 구분한다.
+현재 collaboration.spawn_agent 호출의 task_name에 아래 이름을 실제로 전달하고 메시지·보고에 원래 제목을 병기한다. 모델 약칭은 family+점 없는 버전이며 task는 action+target으로 짧게 쓴다. 생성 전에 실제 Role, 모델 약칭과 명시 요청값의 일치(명시 요청 미지원이면 확인된 실제 모델과의 일치), action_target의 수행 내용과 대상을 확인한다. fork_turns는 none 또는 필요한 양의 이력 수로 지정하고 필요한 맥락을 메시지로 전달한다. all 때문에 모델 요청을 생략하지 않는다. 생성 직후 list_agents의 agent_name 경로가 전달한 task_name을 포함하는지 확인한다.
 
 | task_name | 표시 제목 |
 |---|---|
@@ -63,7 +63,7 @@ Implementation이 필요한 Bugfix에는 Implementer를 최소 1개 배정한다
 | `implementer_sol61_fix_ap_tree` | Implementer · 6.1 Sol · AP 트리 수정 |
 | `reviewer_astra6_review_chart_diff` | Reviewer · 6 Astra · 차트 diff 검토 |
 | `qa_luna56_check_tree_selection` | QA · 5.6 Luna · 트리 선택 동작 검증 |
-| `explorer_trace_agent_names` | Explorer · Codex Agent 목록 이름 흐름 조사 |
+| `explorer_sol61_trace_agent_names` | Explorer · 6.1 Sol · Codex Agent 목록 이름 흐름 조사 |
 
 작성·runtime 적용과 정확한 UI 표시의 제한은 [SKILL.md](../SKILL.md)의 담당자 표시 제목을 따른다.
 
@@ -72,9 +72,11 @@ Implementation이 필요한 Bugfix에는 Implementer를 최소 1개 배정한다
 ```text
 Ticket: [발급한 Ticket ID]
 Title: [업무 제목]
-task_name (실제 생성 인자): role_model_task / 요청 모델과 확인된 실제 모델 모두 없으면 role_task
-표시 제목: [Role] · [Model Full Name] · [Task] / 요청 모델과 확인된 실제 모델 모두 없으면 [Role] · [Task]
-requested_model: 명시 요청값 또는 없음
+task_name (실제 생성 인자): role_model_action_target (모델 필수)
+표시 제목: [Role] · [Model Full Name] · [Task]
+model (실제 생성 인자): task에 맞게 선택한 지원 모델
+fork_turns: none 또는 필요한 양의 이력 수
+requested_model: 명시 요청값 (도구가 명시 요청을 지원하지 않으면 없음)
 actual_model: 실제 확인값 또는 미확인
 역할 / 목적:
 담당 범위:
@@ -89,11 +91,11 @@ actual_model: 실제 확인값 또는 미확인
 ```text
 Ticket: [발급한 Ticket ID]
 Title: [업무 제목]
-task_name (실제 생성 인자): role_model_task / 요청 모델과 확인된 실제 모델 모두 없으면 role_task
+task_name (실제 생성 인자): role_model_action_target (모델 필수)
 agent_name (list_agents 실제 관측 경로):
 이름 적용 확인: 일치 / 불일치 / 미확인 (전달한 task_name 포함 여부와 제한)
-표시 제목: [Role] · [Model Full Name] · [Task] / 요청 모델과 확인된 실제 모델 모두 없으면 [Role] · [Task]
-requested_model: 명시 요청값 또는 없음
+표시 제목: [Role] · [Model Full Name] · [Task]
+requested_model: 명시 요청값 (도구가 명시 요청을 지원하지 않으면 없음)
 actual_model: 실제 확인값 또는 미확인
 Role / task:
 Result:
