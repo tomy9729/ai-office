@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.5.0**
+Version: **0.5.1**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -30,7 +30,22 @@ Sub Agent 목록의 실제 인스턴스 이름에 `[Role] · [Model Full Name] �
 
 복잡하거나 영향이 큰 변경은 실제 파일과 흐름을 읽은 뒤 10줄 이내 요약과 필요한 Execution Plan을 만듭니다. Plan은 역할·범위·모델 선택·의존성·검증을 담는 초기안이며 조사 결과에 따라 조정합니다. 작은 변경에는 계획을 만들지 않습니다. [templates.md](references/templates.md)와 [teams.md](references/teams.md)는 현재 사용하던 템플릿과 조합 예시입니다.
 
-업무 티켓은 기록할 가치가 있는 요청 하나를 식별해 Plan, 담당자 작업, Review, QA, Report와 Decision을 연결합니다. `AO-YYYYMMDD-NNN · 구체적인 업무 제목`을 쓰고 같은 요청의 후속 작업은 같은 ID를 유지합니다. 단순 질의에는 만들지 않으며 Plan이나 Agent를 강제하지 않습니다. 번호를 확인·예약할 수 없거나 동시 발급 가능성이 있으면 전체 UUID 대체 형식을 사용합니다. 발급·충돌 규칙은 [SKILL.md](SKILL.md), 기록 형식은 [templates.md](references/templates.md)에 있습니다.
+업무 티켓은 기록할 가치가 있는 요청 하나를 식별해 Plan, 담당자 작업, Review, QA, Report와 Decision을 연결합니다. 저장 보고서 제목은 `AO-YYYYMMDD-NNN · 구체적인 업무 제목`을 쓰고 같은 요청의 후속 작업은 같은 ID를 유지합니다. 채팅은 아래 공통 보고 제목을 사용하며 티켓은 제목 아래에 한 번만 표시합니다. 단순 질의에는 만들지 않으며 Plan이나 Agent를 강제하지 않습니다. 번호를 확인·예약할 수 없거나 동시 발급 가능성이 있으면 전체 UUID 대체 형식을 사용합니다. 발급·충돌 규칙은 [SKILL.md](SKILL.md), 기록 형식은 [templates.md](references/templates.md)에 있습니다.
+
+## 업무 채팅 보고
+
+Main과 Sub Agent가 채팅에 보내는 업무 답변 자체를 보고 양식으로 작성합니다. 공통 제목은 `### 보고 구분 · 업무명`이며 발급된 티켓은 제목 바로 아래 `**Ticket:** [ID]`로 한 번만 표시합니다. 일반 질의응답·아이디어 제안·확인 질문은 이 양식을 강제하지 않습니다.
+
+| 보고 구분 | 필수 항목 |
+|---|---|
+| Main 착수 보고 | 요청 이해 / 수행 계획 / 완료 기준 |
+| Main 진행 보고 | 핵심 확인 내용 / 현재 결과 / 다음 작업 |
+| Main 결과 보고 | 결과 요약 / 수행 내용 / 검증 / 남은 사항 / 업무 / 기록 / 전체 상태 / 남은 조치 |
+| Sub Agent 담당자 보고 | 담당 직무·업무 / 수행 결과 / 근거·검증 / 제한·인계 사항 |
+
+항목명은 굵게 쓰고 자연스러운 문장으로 충분한 근거를 전달하며 길이를 제한하지 않습니다. 진행 보고는 새 정보만 담고 비교·배정은 표를 사용합니다. 장식용 이모지나 불필요한 반복을 넣지 않으며 직무별 새 양식을 만들지 않습니다. 담당자 식별자·실제 관측 이름·이름 적용 확인·표시 제목과 요청/실제 모델 정보는 담당 직무·업무 항목 안에 유지합니다. 실행하지 않은 검증은 `미실행`과 이유를 명시하고, 차단된 진행이나 업무 완료 후 기록 미완료도 구분해 보고합니다.
+
+이는 별도 보고서 생성 기능이 아닙니다. 파일 보고의 metadata와 저장 정책은 독립적으로 유지하며 매 응답마다 파일을 만들지 않습니다. 네 가지 채팅 예시와 저장 보고서 양식은 [templates.md](references/templates.md)에 있습니다.
 
 ## Report Architecture
 
@@ -75,6 +90,8 @@ python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone A
 ```
 
 Report·INDEX·필요한 Decision 저장 뒤 실행합니다. `--date`는 스냅샷 기간의 기준일이고 기본값은 지정 timezone의 현재 날짜입니다. 해당 일·주·월 파일 하나씩을 갱신합니다. DB·서버·watcher·실시간 Agent 상태 수집은 추가하지 않습니다. 상세 규칙과 제한은 [Workspace 규칙](references/workspace.md), metadata 예시는 [템플릿](references/templates.md)을 따릅니다.
+
+0.5.1은 업무 채팅 보고 양식과 저장 보고서 정책을 구분한 운영 규칙 보완입니다.
 
 0.5.0은 표시 정보 fallback과 업무·전체 상태 분리, Dashboard 업무 상태 탐색을 추가한 MINOR 변경입니다.
 
