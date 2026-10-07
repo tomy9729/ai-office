@@ -35,11 +35,18 @@ Team은 고정 절차가 아닌 [조합 예시](references/teams.md)입니다. P
 - 관련 후속 작업은 가능하면 기존 agent에 follow-up으로 맡깁니다. 새 agent는 다른 독립 범위나 별도 역할이 필요할 때만 추가합니다.
 - Main은 불필요해진 실행을 runtime이 제공하는 interrupt/stop으로 중단합니다. close 기능이 제공되면 완료 후 닫을 수 있지만 없는 종료 API를 만들거나 final 응답만으로 runtime agent가 제거되었다고 보고하지 않습니다.
 
+## Core 변경과 Git 반영
+
+- 먼저 AI Office Core 변경인지 확인합니다. 범용 역할·모델 선택·위임, Plan·Review·QA, 완료·보고 방법, 설치 연결의 변경은 Core Git 대상입니다. 회사·프로젝트 전용 규칙과 실제 업무 보고·결정·INDEX는 외부 저장소에 두며 Core에 PC 경로, 회사 정보나 업무 데이터를 넣지 않습니다.
+- Core를 변경하면 원본 checkout의 대상 diff와 민감정보를 검토하고 필요한 검증·리뷰 후 commit·push합니다. 설치본이 원본 checkout이면 그곳에서 반영하고, 별도 복사 설치본이면 변경을 원본 checkout에 반영합니다. 가능한 환경에서는 commit·push까지 완료해야 하며 실패하거나 실행할 수 없으면 PARTIAL로 표시하고 원인과 남은 조치를 보고합니다.
+- 일반 업무의 보고서·INDEX·결정 기록만 갱신한 경우 AI Office Git 변경·commit·push는 필요하지 않습니다.
+
 ## 보고와 완료
 
+- Core는 기록 방법과 템플릿을 관리하고, 실제 업무 보고서·INDEX·결정은 설정된 외부 report_repository에 저장합니다. 템플릿 원본은 references/templates.md이며 실제 기록을 Core에 저장하지 않습니다.
 - Main은 Sub Agent 결과를 통합·리뷰·검증한 뒤 최종 보고서 작성과 기록 저장을 책임집니다. Sub Agent는 배정된 일만 수행하고 결과와 실제 검증을 Main에 전달합니다. Document Manager는 모든 작업에 추가하지 않고 문서 규모가 커져 역할 분리가 필요할 때만 고려합니다.
 - 코드 수정, 설계 변경, 버그 수정, 기능 추가, 리팩토링, 프로젝트 결정 등 후속 가치가 있는 작업은 최종 보고를 남깁니다. 단순 질의·설명·조사에는 저장을 강제하지 않습니다. 결과, 근거, 검증, 남은 제한을 간결하게 보고하고 필요할 때만 실제 사용 역할과 상대 복잡도를 표시합니다.
 - report_repository와 report_timezone은 사용자 또는 프로젝트 AGENTS.md의 값입니다. 프로젝트에서 명시한 값이 있으면 우선합니다. 별도 설정 파일이나 parser는 만들지 않습니다. report_repository가 지정되지 않으면 대화의 최종 보고로 충분하며 AI Office는 정상 동작합니다. timezone이 없으면 사용자가 제공한 현지 시간 정보를 쓰고, 그것도 없으면 UTC를 사용하고 표시합니다.
 - report_repository가 지정되면 기록 대상 작업의 보고서를 그 아래 Reports/YYYY/MM/YYYY-MM-DD-작업명.md에 저장하고 INDEX.md를 갱신합니다. 중요한 결정만 Decisions/DECISIONS.md에 남깁니다. 날짜는 report_timezone 기준입니다. 과거 작업은 INDEX에서 찾아 관련 보고만 읽습니다. 상세 형식은 [템플릿](references/templates.md)을 따릅니다.
 - 흐름은 사용자 요청 → Main 분석 → 작업 분배 → Sub 실행 → Main 통합 → 리뷰·검증 → 최종 보고 → 설정된 기록 저장 → 완료입니다.
-- COMPLETED는 필요한 구현·리뷰·검증, 미해결 사항 확인, Main 통합, 최종 보고 및 설정된 저장·INDEX·필요한 결정 기록까지 끝난 상태입니다. 남은 일이 있으면 PARTIAL, 진행을 막는 조건이 있으면 BLOCKED로 표시하고 제한을 알립니다. 설정된 저장이 실패하면 원인에 따라 PARTIAL/BLOCKED이며 COMPLETED로 표시하지 않습니다.
+- COMPLETED는 필요한 구현·리뷰·검증, 미해결 사항 확인, Main 통합, 최종 보고 및 설정된 저장·INDEX·필요한 결정 기록, Core 변경 시 commit·push까지 끝난 상태입니다. 남은 일이 있으면 PARTIAL, 진행을 막는 조건이 있으면 BLOCKED로 표시하고 제한을 알립니다. 설정된 저장이 실패하면 원인에 따라 PARTIAL/BLOCKED이며 COMPLETED로 표시하지 않습니다.

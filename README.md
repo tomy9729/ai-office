@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.1.0**
+Version: **0.1.1**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 Main이 일을 분석하고 역할을 선택하여 위임·통합·검증·완료 판단을 수행하는 범용 Agent 운영 체계입니다. 기존 설치에서 사용하던 운영 규칙, 여섯 역할과 템플릿을 독립 패키지로 추출했습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -26,9 +26,15 @@ AI Office는 Main이 일을 분석하고 역할을 선택하여 위임·통합·
 
 복잡하거나 영향이 큰 변경은 실제 파일과 흐름을 읽은 뒤 10줄 이내 요약과 필요한 Execution Plan을 만듭니다. Plan은 역할·범위·모델 선택·의존성·검증을 담는 초기안이며 조사 결과에 따라 조정합니다. 작은 변경에는 계획을 만들지 않습니다. [templates.md](references/templates.md)와 [teams.md](references/teams.md)는 현재 사용하던 템플릿과 조합 예시입니다.
 
+## Report Architecture
+
+Core는 기록 방법과 템플릿을 관리하고, 외부 report_repository는 실제 업무 보고서·INDEX·결정 데이터를 보관합니다. 템플릿 원본은 [references/templates.md](references/templates.md)입니다. 회사·프로젝트 규칙, PC 경로와 실제 업무 데이터는 Core Git에 넣지 않습니다.
+
+범용 역할·모델 선택·위임, Plan·Review·QA, 완료·보고 방법과 설치 연결의 변경은 Core Git 대상입니다. 일반 업무의 보고서·INDEX·결정 기록 갱신만으로는 AI Office Git 변경·commit·push가 필요하지 않습니다.
+
 ## Completion State와 Reporting
 
-- **COMPLETED**: 구현·필요한 리뷰·실제 검증·Main 통합·최종 보고 및 설정된 기록 갱신이 모두 끝남.
+- **COMPLETED**: 구현·필요한 리뷰·실제 검증·Main 통합·최종 보고 및 설정된 기록 갱신, Core 변경 시 commit·push가 모두 끝남.
 - **PARTIAL**: 남은 일이 있으며 완료를 선언할 수 없음.
 - **BLOCKED**: 진행을 막는 조건이 있으며 원인과 필요한 조치를 보고함.
 
@@ -53,7 +59,7 @@ AI Office는 일을 수행하는 방식을 정합니다. 프로젝트 AGENTS.md�
 
 ## 설치
 
-새 PC의 로컬 사용자 Skill 발견 경로는 `~/.agents/skills`입니다. 설치본 자체를 Git checkout으로 두어 별도 복사본을 만들지 않습니다. 다음 명령은 PowerShell 기준입니다.
+새 PC의 로컬 사용자 Skill 발견 경로는 `~/.agents/skills`입니다. 설치본 자체를 원본 Git checkout으로 사용하여 설치본과 변경 원본을 하나로 둡니다. 다음 명령은 PowerShell 기준입니다.
 
 ```powershell
 New-Item -ItemType Directory -Path "$HOME/.agents/skills" -Force | Out-Null
@@ -104,7 +110,7 @@ Get-ChildItem -LiteralPath "$officeInstall/roles" -Filter 'office-*.toml' |
     Copy-Item -Destination "$HOME/.codex/agents" -Force
 ```
 
-AI Office 개선은 checkout에서 변경 → 검증·review → commit → GitHub push → 다른 PC에서 pull 순서로 관리합니다. GitHub가 공통 원본이며 각 PC는 설치 checkout입니다. push에는 해당 저장소의 쓰기 권한이 있는 Git 인증이 필요합니다. 다른 계정의 기존 인증을 덮어쓰지 않습니다. 회사·프로젝트 전용 수정은 외부 Plugin/Skill에 둡니다. 배포 시스템, installer, package manager와 CI는 추가하지 않습니다.
+AI Office 개선은 Core 변경 여부 확인 → 원본 checkout 변경 → 대상 diff·민감정보 검토 → 검증·review → commit → GitHub push → 다른 PC에서 pull 순서로 관리합니다. 별도 복사 설치본을 수정했다면 변경을 원본 checkout에 반영한 뒤 이 순서를 따릅니다. 가능한 환경에서는 commit·push까지 완료해야 하며 실패하거나 실행할 수 없으면 PARTIAL로 표시하고 원인과 남은 조치를 보고합니다. GitHub가 공통 원본이며 각 PC는 설치 checkout입니다. push에는 해당 저장소의 쓰기 권한이 있는 Git 인증이 필요합니다. 다른 계정의 기존 인증을 덮어쓰지 않습니다. 회사·프로젝트 전용 수정은 외부 Plugin/Skill에 둡니다. 배포 시스템, installer, package manager와 CI는 추가하지 않습니다.
 
 버전은 README에서 관리합니다. PATCH는 문구·작은 운영 규칙 보완, MINOR는 역할·workflow·기록 기능 추가, MAJOR는 핵심 운영 구조 변경입니다. Tag는 필요할 때 사용합니다.
 

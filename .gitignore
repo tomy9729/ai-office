@@ -18,6 +18,7 @@ __pycache__/
 Reports/
 Decisions/
 INDEX.md
+/DECISIONS.md
 .vscode/
 .idea/
 .DS_Store
