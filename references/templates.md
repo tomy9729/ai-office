@@ -48,20 +48,22 @@ Implementation이 필요한 Bugfix에는 Implementer를 최소 1개 배정한다
 
 ## 담당자 목록 이름과 생성 인자 예시
 
-기본은 `[Role] · [Model Full Name] · [Task]`이며 실제 확인된 모델 이름과 버전을 사용한다. 요청 모델만 알고 실제 모델을 확인하지 못하면 제목은 `[Role] · [Task]`로 쓰고 요청값은 별도로 기록한다. 요청값을 실제 확인값처럼 표시하지 않는다.
+기본은 `[Role] · [Model Full Name] · [Task]`이며 명시적으로 요청한 모델 이름과 버전을 우선 사용한다. 요청이 없으면 확인된 실제 모델을 사용하고 둘 다 모르면 `[Role] · [Task]`로 쓴다. 요청 모델은 실제 적용 여부가 미확인이어도 제목과 task_name에 넣되 requested_model과 actual_model을 별도로 기록한다. 부모 상속을 확정 모델처럼 추측하지 않는다.
 
 - `Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정`
 - `Reviewer · 6 Astra · Core 변경 diff·회귀 위험 검토`
 - `QA · 5.6 Luna · 설치·업데이트 절차 동작 검증`
-- `Explorer · 로그인 API 호출 흐름 조사` (요청 모델: 6.1 Sol, actual_model: 미기록)
+- `Explorer · 6.1 Sol · 로그인 API 호출 흐름 조사` (requested_model: gpt-6.1-sol, actual_model: 미확인)
 
-현재 collaboration.spawn_agent 호출의 task_name에 아래 이름을 실제로 전달하고 메시지·보고에 원래 제목을 병기한다. 확인 모델 예시와 모델 생략 예시를 구분한다.
+현재 collaboration.spawn_agent 호출의 task_name에 아래 이름을 실제로 전달하고 메시지·보고에 원래 제목을 병기한다. 모델 약칭은 family+점 없는 버전이며 task는 action+target으로 짧게 쓴다. 요청 모델·확인 모델·모델 생략 예시는 보고에서 구분한다.
 
 | task_name | 표시 제목 |
 |---|---|
-| `implementer_6_1_sol_ai_office_agent_list_name_rules_update` | Implementer · 6.1 Sol · AI Office 목록 이름 규칙 수정 |
-| `qa_5_6_luna_install_update_flow_check` | QA · 5.6 Luna · 설치·업데이트 절차 동작 검증 |
-| `explorer_codex_agent_list_name_trace` | Explorer · Codex Agent 목록 이름 흐름 조사 |
+| `explorer_sol61_trace_login_api` | Explorer · 6.1 Sol · 로그인 API 호출 흐름 조사 |
+| `implementer_sol61_fix_ap_tree` | Implementer · 6.1 Sol · AP 트리 수정 |
+| `reviewer_astra6_review_chart_diff` | Reviewer · 6 Astra · 차트 diff 검토 |
+| `qa_luna56_check_tree_selection` | QA · 5.6 Luna · 트리 선택 동작 검증 |
+| `explorer_trace_agent_names` | Explorer · Codex Agent 목록 이름 흐름 조사 |
 
 작성·runtime 적용과 정확한 UI 표시의 제한은 [SKILL.md](../SKILL.md)의 담당자 표시 제목을 따른다.
 
@@ -70,9 +72,10 @@ Implementation이 필요한 Bugfix에는 Implementer를 최소 1개 배정한다
 ```text
 Ticket: [발급한 Ticket ID]
 Title: [업무 제목]
-task_name (실제 생성 인자): role_model_task / 실제 모델 확인 불가 시 role_task
-표시 제목: [Role] · [Model Full Name] · [Task] / 실제 모델 확인 불가 시 [Role] · [Task]
-모델 (요청 / 실제 확인):
+task_name (실제 생성 인자): role_model_task / 요청 모델과 확인된 실제 모델 모두 없으면 role_task
+표시 제목: [Role] · [Model Full Name] · [Task] / 요청 모델과 확인된 실제 모델 모두 없으면 [Role] · [Task]
+requested_model: 명시 요청값 또는 없음
+actual_model: 실제 확인값 또는 미확인
 역할 / 목적:
 담당 범위:
 필수 제약:
@@ -86,11 +89,12 @@ task_name (실제 생성 인자): role_model_task / 실제 모델 확인 불가 
 ```text
 Ticket: [발급한 Ticket ID]
 Title: [업무 제목]
-task_name (실제 생성 인자): role_model_task / 실제 모델 확인 불가 시 role_task
+task_name (실제 생성 인자): role_model_task / 요청 모델과 확인된 실제 모델 모두 없으면 role_task
 agent_name (list_agents 실제 관측 경로):
 이름 적용 확인: 일치 / 불일치 / 미확인 (전달한 task_name 포함 여부와 제한)
-표시 제목: [Role] · [Model Full Name] · [Task] / 실제 모델 확인 불가 시 [Role] · [Task]
-모델 (요청 / 실제 확인):
+표시 제목: [Role] · [Model Full Name] · [Task] / 요청 모델과 확인된 실제 모델 모두 없으면 [Role] · [Task]
+requested_model: 명시 요청값 또는 없음
+actual_model: 실제 확인값 또는 미확인
 Role / task:
 Result:
 Evidence (paths, commands, observed behavior):
@@ -104,14 +108,14 @@ Ticket: [발급한 Ticket ID]
 
 필요한 경우 실제 사용한 agent만 기록한다. Complexity는 선택적인 상대 난이도이며 유용할 때만 low/medium/high로 적는다.
 
-| Agent identifier / 표시 제목 | Role | Task | Model (requested / confirmed) | Complexity | Result |
+| Agent identifier / 표시 제목 | Role | Task | Model (requested_model / actual_model) | Complexity | Result |
 |---|---|---|---|---|---|
-| explorer_6_1_sol_login_api_call_flow_trace / Explorer · 6.1 Sol · 로그인 API 호출 흐름 조사 | Explorer | 조사 범위 | 6.1 Sol / 6.1 Sol 확인 | 선택 | 완료 및 근거 |
-| implementer_ai_office_core_report_rules_update / Implementer · AI Office Core 보고 규칙 수정 | Implementer | 수정 범위 | requested_model: 6.1 Sol / actual_model: 미기록 | 선택 | 변경 및 검증 |
+| explorer_sol61_trace_login_api / Explorer · 6.1 Sol · 로그인 API 호출 흐름 조사 | Explorer | 조사 범위 | requested_model: gpt-6.1-sol / actual_model: gpt-6.1-sol 확인 | 선택 | 완료 및 근거 |
+| implementer_sol61_update_report_rules / Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정 | Implementer | 수정 범위 | requested_model: gpt-6.1-sol / actual_model: 미확인 | 선택 | 변경 및 검증 |
 
 Max Parallel: [관측된 최대 동시 Agent 수; Main 제외]
 
-확인하지 않은 모델은 요청 모델과 구분한다.
+이름과 제목에 요청 모델을 사용해도 실제 적용 여부가 확인된 것은 아니다. requested_model과 actual_model을 구분한다.
 
 ## 최종 보고와 기록
 

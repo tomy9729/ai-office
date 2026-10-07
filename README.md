@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.3.1**
+Version: **0.3.2**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -22,7 +22,7 @@ Main은 요구 분석, 코드 읽기, 계획, 영향 판단, 역할·모델 선�
 
 역할 정의는 [roles/](roles)에 있습니다. 현재 runtime이 제공하는 agent_type을 선택하거나, 선택 기능이 없으면 역할의 developer_instructions를 할당 메시지에 전달합니다. 없는 API를 만들지 않으며 위임이 불가능한 경우 제한을 보고합니다. child는 배정된 결과를 보고한 뒤 task를 끝내고 Office를 다시 구성하지 않습니다. 후속 일은 기존 agent를 재사용하며 runtime 종료 기능은 제공되는 범위에서만 사용합니다.
 
-Sub Agent 목록의 실제 인스턴스 이름에 `[Role] · [Model Full Name] · [Task]`를 적용합니다. 예: `Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정`. 실제 모델 확인 불가 시 `[Role] · [Task]`로 표시하며 placeholder를 사용하지 않습니다. 현재 runtime은 허용 문자에 맞춘 `role_model_task`(실제 모델 확인 불가 시 `role_task`)를 생성 인자 task_name에 넣으며 정확한 UI 표시에는 제한이 있습니다. 상세 규칙과 제한은 [SKILL.md](SKILL.md), 생성 인자 예시는 [templates.md](references/templates.md)에 있습니다.
+Sub Agent 목록의 실제 인스턴스 이름에 `[Role] · [Model Full Name] · [Task]`를 적용합니다. 예: `Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정`. 명시적으로 요청한 모델을 우선 사용하고 요청이 없으면 확인된 실제 모델을 쓰며, 둘 다 모르면 모델 부분을 생략합니다. 요청 모델의 실제 적용 여부는 requested_model과 actual_model로 분리해 보고합니다. 현재 runtime은 생성 인자 task_name에 `role_model_task`를 넣으며 모델 약칭은 family 뒤에 버전의 점을 제거해 붙입니다(예: `implementer_sol61_fix_ap_tree`, `reviewer_astra6_review_chart_diff`). task는 action+target으로 짧게 쓰며 정확한 UI 표시에는 제한이 있습니다. 상세 규칙과 제한은 [SKILL.md](SKILL.md), 생성 인자 예시는 [templates.md](references/templates.md)에 있습니다.
 
 ## Workflow와 Execution Plan
 
