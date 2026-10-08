@@ -151,6 +151,41 @@ estimated_md: 1
             path = self.write("work.md", "---\nwork_status: " + value + "\n---\n")
             self.assertEqual(dashboard.report(self.root, path)["work_status"], "UNKNOWN" if value == "null" else value)
 
+    def test_recording_issue_and_same_ticket_recovery(self):
+        for value in (None, "", "null", '\"\"', '\"   \"', "~"):
+            with self.subTest(value=value):
+                field = "" if value is None else "recording_issue: " + value + "\n"
+                path = self.write("issue.md", "---\n" + field + "---\n")
+                self.assertIsNone(dashboard.report(self.root, path)["recording_issue"])
+        issue = 'Dashboard: permission denied \"quote\" </script><img src=x>'
+        content = "---\nticket: AO-same-ticket\ndate: 2026-10-07\nstatus: BLOCKED\nwork_status: COMPLETED\nrecording_issue: " + json.dumps(issue) + "\n---\n# Work complete\n"
+        path = self.write("issue.md", content)
+        index = self.root / "INDEX.md"
+        index.write_text("AO-same-ticket | BLOCKED | COMPLETED\n", encoding="utf-8")
+        data = dashboard.generate(self.root, date(2026, 10, 7), "UTC", current_date=date(2026, 10, 7))
+        self.assertEqual(data["periods"]["current"]["reports"][0]["recording_issue"], issue)
+        self.assertEqual(data["schema_version"], 2)
+        current = self.root / "Dashboard" / "Current" / "index.html"
+        self.assertNotIn("</script><img", current.read_text(encoding="utf-8"))
+        snapshots = {p: p.read_bytes() for p in (self.root / "Dashboard").rglob("*") if p.is_file()}
+        bad = self.write("bad.md", "---\nstatus: DONE\n---\n")
+        sources = {p: p.read_bytes() for p in self.root.rglob("*.md")}
+        with self.assertRaises(ValueError):
+            dashboard.generate(self.root, date(2026, 10, 7), "UTC", current_date=date(2026, 10, 7))
+        self.assertEqual(sources, {p: p.read_bytes() for p in self.root.rglob("*.md")})
+        self.assertEqual(snapshots, {p: p.read_bytes() for p in (self.root / "Dashboard").rglob("*") if p.is_file()})
+        bad.unlink()
+        path.write_text(content.replace("status: BLOCKED", "status: COMPLETED").replace("recording_issue: " + json.dumps(issue), "recording_issue: null"), encoding="utf-8")
+        index.write_text("AO-same-ticket | COMPLETED | COMPLETED\n", encoding="utf-8")
+        sources = {p: p.read_bytes() for p in self.root.rglob("*.md")}
+        data = dashboard.generate(self.root, date(2026, 10, 7), "UTC", current_date=date(2026, 10, 7))
+        row = data["periods"]["current"]["reports"][0]
+        self.assertEqual((row["ticket"], row["status"], row["work_status"], row["recording_issue"]), ("AO-same-ticket", "COMPLETED", "COMPLETED", None))
+        self.assertEqual(sources, {p: p.read_bytes() for p in self.root.rglob("*.md")})
+        self.assertEqual(set(snapshots), {p for p in (self.root / "Dashboard").rglob("*") if p.is_file()})
+        self.assertEqual(len(list((self.root / "Reports").rglob("*.md"))), 1)
+        self.assertEqual(index.read_text(encoding="utf-8").count("AO-same-ticket"), 1)
+
     def test_operating_docs_allow_missing_display_information(self):
         core = Path(__file__).resolve().parent.parent
         for name in ("SKILL.md", "README.md", "references/templates.md"):

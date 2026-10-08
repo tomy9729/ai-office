@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.5.4**
+Version: **0.6.0**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -22,40 +22,19 @@ Main은 요구 분석, 코드 읽기, 계획, 영향 판단, 역할·모델 선�
 
 역할 정의는 [roles/](roles)에 있습니다. 현재 runtime이 제공하는 agent_type을 선택하거나, 선택 기능이 없으면 역할의 developer_instructions를 할당 메시지에 전달합니다. 없는 API를 만들지 않으며 위임이 불가능한 경우 제한을 보고합니다. child는 배정된 결과를 보고한 뒤 task를 끝내고 Office를 다시 구성하지 않습니다. 후속 일은 기존 agent를 재사용하며 runtime 종료 기능은 제공되는 범위에서만 사용합니다.
 
-Sub Agent 목록의 실제 인스턴스 이름에 `[Role] · [Model Full Name] · [Task]`를 적용합니다. 예: `Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정`. 새 생성마다 task에 맞는 지원 모델을 먼저 선택하고 지원하는 도구에서는 model 인자로 명시 요청합니다. 표시 기준은 명시 요청한 모델이며 요청값은 requested_model에 기록합니다. 요청이 없으면 독립적으로 확인된 모델을 표시 기준으로 사용할 수 있고 둘 다 없으면 모델을 생략한 `Role · Task`와 `role_action_target`을 사용합니다. 실행 모델 확인 여부는 별도로 출력하지 않으며 요청값을 실행 모델의 확인값으로 간주하지 않습니다. fork_turns는 none 또는 필요한 양의 이력 수로 지정해 필요한 맥락을 전달합니다. 현재 runtime은 생성 인자 task_name에 `role_model_action_target`을 기본으로 넣으며 모델 약칭은 family 뒤에 버전의 점을 제거해 붙입니다(예: `implementer_sol61_fix_ap_tree`, `reviewer_astra6_review_chart_diff`). 생성 전에 실제 Role, 모델 약칭과 명시 요청값의 일치(요청이 없으면 독립적으로 확인된 모델과 비교하며 둘 다 없으면 모델 검사 생략), action_target을 확인하고 생성 직후 list_agents의 agent_name 경로를 확인합니다. 정확한 UI 표시에는 제한이 있습니다. 상세 규칙과 제한은 [SKILL.md](SKILL.md), 생성 인자 예시는 [templates.md](references/templates.md)에 있습니다.
+담당자 표시·생성·모델 선택은 [SKILL.md](SKILL.md#담당자-표시-제목)를 따릅니다. 예: `Implementer · 6.1 Sol · AP 트리 수정`. 요청·확인 모델 정보가 모두 없으면 `Role · Task`와 `role_action_target`을 사용합니다. 생성 예시는 [templates.md](references/templates.md)에 있습니다.
 
 ## Workflow와 Execution Plan
 
-실행 흐름: 대표 요청 → 기록 대상이면 업무 티켓 생성 → Main 분석 → 필요한 담당자와 모델 선택 → 업무 배정 → 담당자 작업 → 리뷰·검증 → Main 결과 통합·최종 확인 → 업무 보고 → 설정된 기록 저장 → 완료.
+요청 → 필요한 담당자 배정 → 수행·리뷰·검증 → Main 통합 → 보고·기록 순서로 진행합니다. 업무량과 위험을 독립적으로 판단하고 작은 변경은 Implementer 한 명으로 처리합니다. 최소 절차·독립 리뷰·QA 선택 기준은 [SKILL.md](SKILL.md#최소-절차와-검증-선택), 팀 예시는 [teams.md](references/teams.md)를 참고합니다.
 
-AI Office가 활성화된 Plan Mode에서는 별도 명령 없이 최종 계획을 호스트의 `<proposed_plan>` 안에 `AI OFFICE · WORK ORDER`와 실행 계획이 합쳐진 하나의 문서로 작성합니다. 파일 생성은 요구하지 않습니다. 업무명·목적·Main 책임·Size·Estimated MD·실제 위험을 담고 명시적 요구사항과 조사로 확정할 암묵적 요구사항을 구분합니다. MD는 업무량이며 일정이 아닙니다. 우선순위는 순서에 영향을 줄 때만 쓰고 현재 단계는 `계획 수립`으로 표시합니다. 이미 발급된 AO 티켓만 사용하며 계획만을 위해 새 티켓을 발급하지 않습니다.
+Plan Mode 최종 계획은 `<proposed_plan>` 안의 `AI OFFICE · WORK ORDER`로 작성합니다. 크기에 맞는 양식은 [templates.md](references/templates.md#plan-mode-업무-계획서), 실행 경계와 선택 규칙은 [SKILL.md](SKILL.md#plan-mode-업무-계획서)가 원본입니다.
 
-Plan Mode에서는 읽기 전용 조사로 구현에 중요한 미확정 사항을 해소한 뒤 최종 계획을 작성합니다. 코드 수정·Agent 구현 시작·commit·push는 실행 모드에서 진행합니다. 배정 표는 실행 예정 Role·범위·산출물·검증을 담으며 실행으로 전환하면 같은 매핑으로 위임하고 실제 변경 이유를 설명합니다. Main은 분석·판단·통합을 맡고 구현·검증·commit은 Sub Agent에 위임합니다. 작은 작업은 Implementer 한 명이면 충분하며 Reviewer·QA 별도 Agent를 의무 배정하지 않습니다. Researcher/Developer는 Explorer/Implementer의 설명용 별칭이며 새 직무가 아닙니다.
-
-| 크기 | 계획에 담을 내용 |
-|---|---|
-| S | 목적·Size/MD·요구사항·범위와 순서·담당자·검증과 완료 기준 |
-| M | 업무 개요·요구사항·완료한 조사와 남은 실행 검증·배정·순서와 범위·위험과 완료 기준 |
-| L | M에 필요한 아키텍처·의존성·병렬·통합·테스트·롤백·주요 결정만 추가 |
-
-Plan Mode 밖에서는 복잡한 변경의 초기 방향만 10줄 이내로 요약하고 필요한 Execution Plan을 만듭니다. 작은 변경에는 별도 계획을 만들지 않습니다. 10줄 기준은 Plan Mode 최종 계획서에 적용하지 않습니다. 장식용 조직·새 식별자·회의·결재·시간 기록·직급·대화/상태 로그는 추가하지 않습니다. [templates.md](references/templates.md#plan-mode-업무-계획서)의 S/M/L 양식과 [teams.md](references/teams.md)의 조합 예시를 필요한 만큼 사용합니다.
-
-업무 티켓은 기록할 가치가 있는 요청 하나를 식별해 Plan, 담당자 작업, Review, QA, Report와 Decision을 연결합니다. 저장 보고서 제목은 `AO-YYYYMMDD-NNN · 구체적인 업무 제목`을 쓰고 같은 요청의 후속 작업은 같은 ID를 유지합니다. 채팅은 아래 공통 보고 제목을 사용하며 티켓은 제목 아래에 한 번만 표시합니다. 단순 질의에는 만들지 않으며 티켓 때문에 Plan이나 Agent를 강제하지 않습니다. Plan Mode의 계획서는 위 규칙에 따라 자동 작성합니다. 번호를 확인·예약할 수 없거나 동시 발급 가능성이 있으면 전체 UUID 대체 형식을 사용합니다. 발급·충돌 규칙은 [SKILL.md](SKILL.md), 기록 형식은 [templates.md](references/templates.md)에 있습니다.
+기록 가치가 있는 요청은 같은 티켓으로 후속 작업을 연결합니다. 동시 발급 가능성이 있으면 전체 UUID, 직렬 발급과 배타적 예약이 가능한 환경에서만 순번을 사용합니다. [업무 티켓 규칙](SKILL.md#업무-티켓)을 따릅니다.
 
 ## 업무 채팅 보고
 
-Main과 Sub Agent가 채팅에 보내는 업무 답변 자체를 보고 양식으로 작성합니다. 공통 제목은 `### 보고 구분 · 업무명`이며 발급된 티켓은 제목 바로 아래 `**Ticket:** [ID]`로 한 번만 표시합니다. 모든 업무 채팅 보고는 제목과 발급된 Ticket 다음, 본문 전에 보고자를 표시합니다. 티켓이 없으면 제목 바로 다음에 표시합니다. Main은 `**보고자:** Main · 업무 조율`, Sub Agent는 `**보고자:** [실제 배정 Role] · [기존 직무]`를 사용하며 여섯 직무 대응은 [SKILL.md](SKILL.md#공통-응답문서-스타일)를 따릅니다. 모델·식별자·범위는 기존 본문에 유지합니다. 일반 질의응답·아이디어 제안·확인 질문은 이 양식을 강제하지 않습니다.
-
-| 보고 구분 | 필수 항목 |
-|---|---|
-| Main 착수 보고 | 요청 이해 / 수행 계획 / 완료 기준 |
-| Main 진행 보고 | 핵심 확인 내용 / 현재 결과 / 다음 작업 |
-| Main 결과 보고 | 결과 요약 / 수행 내용 / 검증 / 남은 사항 / 업무 / 기록 / 전체 상태 / 남은 조치 |
-| Sub Agent 담당자 보고 | 담당 직무·업무 / 수행 결과 / 근거·검증 / 제한·인계 사항 |
-
-항목명은 굵게 쓰고 자연스러운 문장으로 충분한 근거를 전달하며 길이를 제한하지 않습니다. 진행 보고는 새 정보만 담고 비교·배정은 표를 사용합니다. 장식용 이모지나 불필요한 반복을 넣지 않으며 직무별 새 양식을 만들지 않습니다. 담당자 식별자·실제 관측 이름·이름 적용 확인·표시 제목과 명시 요청한 requested_model은 담당 직무·업무 항목 안에 유지하며 요청이 없으면 항목을 생략합니다. 실행하지 않은 검증은 `미실행`과 이유를 명시하고, 차단된 진행이나 업무 완료 후 기록 미완료도 구분해 보고합니다.
-
-Plan Mode의 최종 계획은 위 업무 계획서 양식을 사용하고 기존 보고자·requested_model 규칙을 유지합니다. 이는 별도 보고서 생성 기능이 아닙니다. 파일 보고의 metadata와 저장 정책은 독립적으로 유지하며 매 응답마다 파일을 만들지 않습니다. 네 가지 채팅 예시와 저장 보고서 양식은 [templates.md](references/templates.md)에 있습니다.
+제목·보고자·발급된 Ticket을 표시하고 결과부터 전달합니다. 작은 작업은 **결과·변경 / 검증·제한 / 상태·후속 조치** 세 묶음, 복잡한 작업은 상세 양식을 사용합니다. 필수 정보와 담당자 식별·모델 표시 규칙은 [SKILL.md](SKILL.md#공통-응답문서-스타일), 작성 예시는 [templates.md](references/templates.md)가 원본입니다. 일반 질의응답에 보고 양식이나 파일 생성을 강제하지 않습니다.
 
 ## Report Architecture
 
@@ -65,28 +44,9 @@ Core는 기록 방법과 템플릿을 관리하고, 외부 AI Office Workspace�
 
 ## Completion State와 Reporting
 
-`work_status`는 업무 상태, 기존 `status`는 기록까지 포함한 전체 상태입니다. 업무 완료에는 구현·필요한 리뷰·검증·Main 통합·최종 응답 준비와 Core 변경 시 commit·push를 포함합니다. 업무·기록·전체 상태·남은 조치를 따로 보고하며 Workspace 미설정이면 기록은 `해당 없음`입니다. 업무 완료 후 기록이 남으면 전체 PARTIAL, 기록 진행을 막는 조건이면 BLOCKED입니다.
+`work_status`는 업무 상태, `status`는 기록을 포함한 전체 상태입니다. 업무가 완료됐어도 기록이 남으면 PARTIAL(기록 미완료), 기록 진행이 막히면 BLOCKED(기록 차단)로 표시합니다. 상태를 추정하거나 실패를 완료로 기록하지 않습니다.
 
-모델 정보 때문에 실행을 중단하거나 확인 여부를 별도로 보고하지 않습니다. 이름 관측 실패·UI 표시 불일치도 실행을 중단하지 않으며 기존 이름 확인 규칙에 따라 근거와 제한을 보고합니다. 위임 도구나 필요한 실행 권한 자체의 부재는 blocker입니다.
-
-- **COMPLETED**: 구현·필요한 리뷰·실제 검증·Main 통합·최종 보고 및 설정된 기록 갱신, Dashboard 갱신과 Core 변경 시 commit·push가 모두 끝남.
-- **PARTIAL**: 남은 일이 있으며 완료를 선언할 수 없음.
-- **BLOCKED**: 진행을 막는 조건이 있으며 원인과 필요한 조치를 보고함.
-
-사용자 또는 프로젝트 AGENTS.md에 `ai_office_workspace`를 지정할 수 있습니다. 기존 `report_repository`는 같은 루트를 가리키는 호환 alias입니다. 프로젝트 설정이 우선하고 같은 범위에서는 ai_office_workspace가 우선합니다. 지정 경로를 그대로 쓰며 하위 폴더를 자동 추가하지 않습니다. 미지정이면 대화의 최종 보고로 충분합니다. 지정된 경우 후속 가치가 있는 작업은 아래 형식으로 저장하며 저장 실패를 COMPLETED로 표시하지 않습니다.
-
-```text
-<Workspace>/
-├─ Dashboard/Current/{index.html,data.json}
-├─ Dashboard/Archive/{Daily,Weekly,Monthly}/
-├─ Reports/YYYY/MM/Ticket-ID-작업명.md
-├─ INDEX.md
-├─ Decisions/DECISIONS.md
-├─ README.md
-└─ AI Office 운영 안내.md
-```
-
-report_timezone은 사용자의 날짜 기준입니다. 없으면 제공된 현지 시간을, 그것도 없으면 UTC를 쓰고 표시합니다. 단순 질의·설명·조사는 저장을 강제하지 않습니다. 중요한 결정만 결정 기록에 남깁니다. 설정 parser나 별도 설정 시스템은 없습니다.
+업무 완료 조건은 [SKILL.md](SKILL.md#보고와-완료), Workspace 설정·저장·실패 복구와 같은 티켓 재개는 [workspace.md](references/workspace.md#업무와-기록-완료)를 따릅니다. `recording_issue`는 확인된 기록 실패 단계와 이유를 담는 선택 문자열이며 기존 metadata와 schema_version 2를 유지합니다.
 
 ## Size·MD·Report metadata와 Dashboard
 
@@ -100,6 +60,8 @@ python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone A
 ```
 
 Report·INDEX·필요한 Decision 저장 뒤 실행합니다. `--date`는 스냅샷 기간의 기준일이고 기본값은 지정 timezone의 현재 날짜입니다. 해당 일·주·월 파일 하나씩을 갱신합니다. DB·서버·watcher·실시간 Agent 상태 수집은 추가하지 않습니다. 상세 규칙과 제한은 [Workspace 규칙](references/workspace.md), metadata 예시는 [템플릿](references/templates.md)을 따릅니다.
+
+0.6.0은 최소 절차·위험 기반 검증 선택·짧은 위임과 보고·UUID 기본 발급·문서 책임·재사용 지식을 정리하고 기록 차단·실패 이유·동일 티켓 재개를 보완한 MINOR 변경입니다.
 
 0.5.4는 Plan Mode의 통합 업무 계획서와 크기별 실행 계획 작성 규칙을 보완한 PATCH 변경입니다.
 

@@ -5,7 +5,7 @@
 ## Ticket 정보
 
 ```text
-Ticket: AO-YYYYMMDD-NNN
+Ticket: AO-YYYYMMDD-<전체 UUID>
 Title: 짧고 구체적인 업무 제목
 Work Status: COMPLETED / PARTIAL / BLOCKED
 Status (전체): COMPLETED / PARTIAL / BLOCKED
@@ -15,7 +15,7 @@ Final MD: 종료 시 보정값 (선택)
 Report / Decision: 관련 기록 링크 또는 없음
 ```
 
-티켓 비대상 작업에서는 Ticket과 Title 필드를 생략한다. 위 Ticket 정보는 기존 업무·기록용 metadata이며 Plan Mode의 현재 단계나 티켓 발급을 강제하지 않는다. 발급·예약·후속 요청 규칙은 [SKILL.md](../SKILL.md)의 업무 티켓을 따른다. 상태는 별도 생명주기가 아닌 기존 최종 보고 상태다. 순번을 확인·예약할 수 없거나 동시 발급 가능성이 있으면 ID의 NNN 대신 전체 UUID를 사용하고 이유를 남긴다.
+티켓 비대상 작업에서는 Ticket과 Title 필드를 생략한다. 위 Ticket 정보는 기존 업무·기록용 metadata이며 Plan Mode의 현재 단계나 티켓 발급을 강제하지 않는다. 발급·예약·후속 요청 규칙은 [SKILL.md](../SKILL.md)의 업무 티켓을 따른다. 상태는 별도 생명주기가 아닌 기존 최종 보고 상태다. 동시 발급 가능성을 배제할 수 없으면 전체 UUID를 기본으로 사용한다. 순번 예시는 직렬 발급과 배타적 예약이 가능한 환경에만 적용한다.
 
 ## Plan Mode 업무 계획서
 
@@ -147,21 +147,20 @@ M의 내용에 필요한 항목만 확장한다. 아래 아키텍처·병렬·�
 
 ## Agent 할당
 
+네 묶음에 작업별 사실을 먼저 담는다. 원본 접근이 불가능하면 필요한 역할·보고 지침을 메시지에 포함한다.
+
 ```text
-Ticket: [발급한 Ticket ID]
-Title: [업무 제목]
-task_name (실제 생성 인자): role_model_action_target (모델 정보가 없으면 role_action_target)
-표시 제목: [Role] · [Model Full Name] · [Task]
-model (실제 생성 인자): task에 맞게 선택한 지원 모델
-fork_turns: none 또는 필요한 양의 이력 수
-requested_model: 명시 요청값 (요청이 없으면 항목 생략)
-역할 / 목적:
-담당 범위:
-필수 제약: 공통 응답·문서 스타일과 보고자 표시를 포함한 담당자 보고 양식을 전달한다. 항목명은 굵게 쓰고 자연스러운 문장과 충분한 근거를 사용하며 길이를 제한하지 않는다. 비교·배정은 표로 작성한다.
-필요한 맥락:
-기대 결과:
-검증 기준:
+문제·완료 조건: [문제와 요구 결과]
+담당 범위·작업 경계: [파일·책임·다른 담당자 경계]. 다른 담당자의 변경을 되돌리지 않는다.
+보존할 동작: [기존 계약·상태·필수 제약]
+검증 방법과 기대 결과: [명령·시나리오, 잡으려는 실패, 통과 조건]
+Ticket / Title: [발급된 ID와 업무 제목; 비대상이면 생략]
+표시 제목 / task_name: [Role · Model · Task / role_model_action_target; 모델 정보가 없으면 Role · Task / role_action_target]
+requested_model / fork_turns: [실제 요청값 / none 또는 필요한 이력 수; 미요청 모델 항목 생략]
+공통 지침: [접근 가능한 역할 TOML과 SKILL 보고 규칙 링크]
 ```
+
+예: UI 재조회에서 이전 선택이 남는 문제를 배정할 때, 기존 선택·해제 동작을 보존하고 새 조회의 선택 초기화 시나리오를 검증 조건으로 적는다. 권한 변경은 독립 Reviewer와 권한 경계 검증이 필요하다. 선택 기준은 [SKILL.md](../SKILL.md#최소-절차와-검증-선택)를 따른다.
 
 ## Agent 결과
 
@@ -236,6 +235,22 @@ Model 열에는 명시 요청한 requested_model만 적으며 요청이 없으�
 **다음 작업:** 서버 접속이 복구되면 화면 검증을 실행하겠습니다. 현재 업무 상태는 BLOCKED이며 접속 복구가 필요합니다.
 ```
 
+### Main 간소 결과 보고
+
+제한적 문구 변경 등 작은 작업에 사용하며 필수 정보를 세 묶음으로 유지한다.
+
+```markdown
+### 결과 보고 · 버튼 문구 수정
+**Ticket:** [발급한 ID; 없으면 생략]
+**보고자:** Main · 업무 조율
+
+**결과·변경:** [결과 요약과 바꾼 파일·동작]
+**검증·제한:** [실행 여부·결과와 남은 사항. 미실행이면 이유]
+**상태·후속 조치:** 업무 COMPLETED · 기록 완료 · 전체 COMPLETED · 남은 조치 없음.
+```
+
+기록 실패 예: `업무 COMPLETED · 기록 차단 — Dashboard 생성: 권한 거부 · 전체 BLOCKED · 남은 조치: 권한 복구 후 같은 티켓의 Dashboard 단계 재개`.
+
 ### Main 결과 보고
 
 ```markdown
@@ -295,6 +310,7 @@ title: 짧고 구체적인 업무 제목
 date: YYYY-MM-DD
 status: COMPLETED
 work_status: COMPLETED
+recording_issue: null
 size: M
 estimated_md: 1.5
 final_md: 2.0
@@ -329,4 +345,6 @@ Ticket: [발급한 Ticket ID]
 중요한 아키텍처·API·상태 관리·공통 규칙·후속 기술 선택이나 기존 방식에서 새 방식으로 바꾼 결정만 `Decisions/DECISIONS.md`에 Ticket ID, 이유와 관련 보고 링크를 남긴다. 보고서 전체를 복제하지 않는다. 예: `- YYYY-MM-DD | Ticket: AO-YYYYMMDD-NNN | 결정: 새 방식 채택 | 이유: ... | 보고: [[Reports/YYYY/MM/Ticket-ID-작업명]]`
 
 metadata에는 실제 확인된 값만 기록한다. `agents`는 실제 참여 역할, `models`는 확인된 실제 모델만 담으며 요청 모델은 본문의 requested_model에 분리한다. 요청값을 확인값으로 간주하거나 models metadata에 복사하지 않는다. 알 수 없는 Size·MD·project·type은 생략하거나 null로 두고 과거 데이터를 임의로 채우지 않는다. `final_md`는 선택 사항이며 INDEX는 final_md, 없으면 estimated_md를 사용한다. 공수 차이가 크면 Report에 짧은 이유를 추가할 수 있다. 저장·색인·Decision 갱신 뒤 Workspace 규칙의 generator를 실행한다.
-업무 상태는 구현·리뷰·검증·Main 통합·최종 응답 준비와 Core 변경의 commit·push를 기준으로 기록한다. Dashboard 생성 직전 Report·INDEX에 전체 완료 예정 값을 반영하고 성공 후에만 완료를 선언한다. 실패하면 전체 상태를 PARTIAL/BLOCKED로 복구하고 업무 상태를 보존한다. 복구 저장 실패도 대화에 명시한다. 과거 업무 상태는 추정하지 않는다.
+업무 완료 조건은 [SKILL.md](../SKILL.md#보고와-완료), metadata와 기록 재개·복구 절차는 [workspace.md](workspace.md#업무와-기록-완료)를 따른다. 선택 문자열 recording_issue에는 확인된 기록 실패 단계와 이유만 적으며 생략·빈 값·null은 이유 미기록이다. 해결되면 생략하거나 null로 갱신한다. 과거 이유는 추정하지 않는다.
+
+큰 재작업·재위임에만 확인된 이유(모델 선택·맥락 부족·요구 변경)를 본문에 짧게 남긴다. 재발 버그·중요한 기술 선택의 재사용 지식은 `원인 → 다음 판단 기준 → 근거 링크`로 기존 Report·Decision을 갱신한다.

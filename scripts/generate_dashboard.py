@@ -130,6 +130,7 @@ def report(root, path):
     legacy_md = md_value(metadata.get("md"), "md")
     representative = final if final is not None else legacy_md if legacy_md is not None else estimated
     return dict(ticket=metadata.get("ticket") or (legacy_ticket[1] if legacy_ticket else None), title=title, date=date_value, status=status, work_status=work_status,
+                recording_issue=(metadata.get("recording_issue") or "").strip() or None,
                 size=size, estimated_md=estimated, final_md=final, md=representative,
                 project=metadata.get("project") or "UNKNOWN", type=metadata.get("type") or "UNKNOWN",
                 path=path.relative_to(root).as_posix(), metadata=has_metadata, content=text, **lists)

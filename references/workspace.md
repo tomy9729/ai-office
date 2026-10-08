@@ -27,7 +27,7 @@ Core는 운영 규칙과 범용 템플릿·generator다. Workspace는 실제 Rep
 | M | 여러 파일 또는 여러 역할이 필요한 일반 작업 |
 | L | 넓은 영향 또는 조사·구현·리뷰·QA 등 여러 단계 |
 
-Size는 업무 범위·투입 규모이며 난이도·모델 역량·직급이 아니다. 어려운 단일 변경도 S, 많은 단순 반복 변경도 M/L일 수 있다.
+Size는 업무 범위·투입 규모이며 난이도·모델 역량·직급이 아니며 위험과 독립적으로 판단한다. 어려운 단일 변경도 S, 많은 단순 반복 변경도 M/L일 수 있다.
 
 MD(Man-Day)는 업무의 상대적 작업량을 사람 기준 공수로 환산한 추정치다. wall-clock·Agent 실행 시간·Token 사용량과 같지 않고 모델 성능으로 환산하지 않는다. 회계·인사 평가용 값으로 취급하지 않는다.
 
@@ -37,7 +37,7 @@ MD(Man-Day)는 업무의 상대적 작업량을 사람 기준 공수로 환산�
 
 ## metadata와 생성
 
-Report 상단 YAML은 ticket, title, date, status, work_status, size, estimated_md, final_md, project, type, agents, models를 사용한다. 본문은 기존 구조를 유지한다. status는 기록을 포함한 전체 상태, work_status는 업무 상태이며 COMPLETED/PARTIAL/BLOCKED다. work_status 누락·null은 UNKNOWN이고 과거 status에서 추정하지 않는다. 파생 JSON schema_version은 2다. date는 report_timezone의 YYYY-MM-DD, MD는 음수가 아닌 숫자다. agents/models는 실제 참여 역할과 확인된 실제 모델을 배열로 기록한다. 요청 모델은 본문에 requested_model로 분리하고 실제 모델을 추측하지 않는다. type: core는 Core 개선 집계에 사용한다. 구체 예시는 [templates.md](templates.md)를 따른다.
+Report 상단 YAML은 ticket, title, date, status, work_status, size, estimated_md, final_md, project, type, agents, models와 선택 문자열 recording_issue를 사용한다. 본문은 기존 구조를 유지한다. status는 기록을 포함한 전체 상태, work_status는 업무 상태이며 COMPLETED/PARTIAL/BLOCKED다. work_status 누락·null은 UNKNOWN이고 과거 status에서 추정하지 않는다. recording_issue는 확인된 기록 실패 단계·이유를 짧은 문자열로 저장하며 생략·빈 문자열·공백만 있는 문자열·null은 JSON null로 정규화한다. 파생 JSON schema_version은 2다. date는 report_timezone의 YYYY-MM-DD, MD는 음수가 아닌 숫자다. agents/models는 실제 참여 역할과 확인된 실제 모델을 배열로 기록한다. 요청 모델은 본문에 requested_model로 분리하고 실제 모델을 추측하지 않는다. type: core는 Core 개선 집계에 사용한다. 구체 예시는 [templates.md](templates.md)를 따른다.
 
 흐름: 업무 수행 → Report 저장 → INDEX·필요한 Decision 갱신 → generator 실행 → Current 및 해당 일·주·월 Archive 갱신. Markdown만 원본이며 data.json과 HTML은 파생 결과물이다. Report가 없거나 과거 metadata가 빠져도 오류 없이 별도 표시하거나 해당 지표에서 제외한다. 없는 MD를 0으로 간주하거나 분모에 넣어 평균을 낮추지 않는다. 업무당 평균은 final_md 우선, 기존 md 호환값, estimated_md 순서로 값이 있는 업무만 분모에 넣는다. Decision은 기존 날짜·Ticket·Report 링크의 Markdown 기록에서 읽으며 임의 날짜를 만들지 않는다.
 
@@ -66,6 +66,10 @@ Archive는 Daily 하루 하나, Weekly ISO 주 하나, Monthly 월 하나로 갱
 
 ## 업무와 기록 완료
 
-기존 상태 필터·완료율은 전체 상태 기준이다. 업무 상태 필터와 목록·상세의 두 상태를 제공한다. work_status=COMPLETED인데 전체가 미완료이면 `업무 완료 · 기록 미완료`로 표시한다. 과거 항목이나 업무 미완료 항목에서 기록 완료를 역산하지 않으며 실패 단계는 Report 본문에서 확인한다.
+전체 상태 필터·완료율은 status 기준이며 업무 상태 필터는 work_status 기준이다. 업무가 COMPLETED일 때만 전체 PARTIAL은 `업무 완료 · 기록 미완료`, BLOCKED는 `업무 완료 · 기록 차단`으로 표시한다. 목록은 구분 문구, 상세는 구분 문구와 recording_issue에 기록된 이유를 textContent로 표시한다. 이유가 없으면 원인을 만들지 않으며 UNKNOWN·업무 미완료에서 기록 상태를 역산하지 않는다.
 
-Dashboard 생성 직전 Report·INDEX에 전체 완료 예정 값을 반영하고 성공 후에만 완료를 선언한다. 실패 시 전체 상태를 PARTIAL/BLOCKED로 되돌리되 업무 상태는 보존한다. 되돌림 저장도 실패하면 대화에 실제 결과와 기록 불일치를 명시한다. generator는 Report·INDEX를 수정하지 않는다.
+기록 순서는 Report → INDEX·필요한 Decision → Dashboard다. 실패하면 업무 상태를 보존하고 전체 상태를 PARTIAL/BLOCKED로 저장하며 확인된 실패 단계·이유를 recording_issue에 남긴다. INDEX·본문에도 실제 상태와 필요한 다음 조치를 반영한다.
+
+재개는 같은 티켓·Report·INDEX 행을 갱신하고 실패한 단계부터 진행한다. 이미 성공한 단계는 필요한 변경이 없으면 반복하지 않는다. 업무 결과가 바뀌지 않았다면 구현·리뷰·검증을 반복하지 않는다. Decision도 같은 결정을 중복 추가하지 않는다.
+
+Dashboard 생성 직전 Report·INDEX에 전체 완료 예정 값을 반영하고 해결된 recording_issue를 생략하거나 null로 지운다. 생성 성공 후에만 전체 완료를 선언한다. 생성 실패 시 전체 PARTIAL/BLOCKED와 실패 이유를 복구하며 업무 상태는 보존한다. 복구 저장도 실패하면 대화에 실제 결과와 기록 불일치를 명시한다. generator는 원본 Report·INDEX·Decision을 수정하지 않는다. 재생성은 같은 기간의 기존 출력 파일을 갱신하며 티켓이나 Report를 새로 만들지 않는다.

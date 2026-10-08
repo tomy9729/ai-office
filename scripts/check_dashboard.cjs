@@ -53,4 +53,25 @@ for(const key of ['__proto__','constructor','toString']){location.hash='view=hea
 assert.equal(evalJS("decodeState('#page=Infinity').page"),1);
 location.hash='view=history&search=Task+1&from=2026-10-01&to=2026-10-07';assert(evalJS("visible.every(r=>r.title.includes('Task 1')&&r.date)"));
 assert.equal(evalJS("decodeState('#'+encodeState(state)).search"),'Task 1');
+// Recording states and issue content share node()/textContent; no HTML parsing.
+const issue='Dashboard: denied "quote" </script><img src=x onerror=alert(1)>';
+for(const status of ['PARTIAL','BLOCKED']) {
+  const fixture={...rows[0],status,recording_issue:issue};
+  context.fixture=fixture;evalJS('detail(fixture)');
+  const label=status==='BLOCKED'?'업무 완료 · 기록 차단':'업무 완료 · 기록 미완료';
+  assert.equal(evalJS('recordingState(fixture)'),label);
+  assert(all(ids['detail-body']).some(n=>n.tag==='p'&&n.textContent===issue));
+  assert.equal(all(ids['detail-body']).filter(n=>n.tag==='img'||n.tag==='script').length,0);
+  evalJS("content.replaceChildren();table('Recording',[fixture])");
+  assert.match(text(ids.content),new RegExp(label));assert(!text(ids.content).includes(issue));
+  for(const recording_issue of [undefined,null,'']) {
+    context.fixture={...fixture,recording_issue};evalJS('detail(fixture)');
+    assert.match(text(ids['detail-body']),new RegExp(label));
+    assert(!all(ids['detail-body']).some(n=>n.textContent===issue));
+  }
+}
+for(const fixture of [{...rows[0],status:'COMPLETED',recording_issue:issue},{...rows[0],status:'UNKNOWN',recording_issue:issue},{...rows[0],status:'BLOCKED',work_status:'UNKNOWN',recording_issue:issue},{...rows[0],status:'PARTIAL',work_status:'PARTIAL',recording_issue:issue}]) {
+  context.fixture=fixture;assert.equal(evalJS('recordingState(fixture)'),'');evalJS('detail(fixture)');
+  assert(!text(ids['detail-body']).includes('업무 완료 · 기록'));assert(!text(ids['detail-body']).includes(issue));
+}
 console.log('Dashboard interaction check passed: shared chart/list filters, keyboard, dates, sort, pagination, dialog, URL restoration, health, null/zero.');
