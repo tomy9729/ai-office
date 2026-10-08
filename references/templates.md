@@ -127,21 +127,21 @@ M의 내용에 필요한 항목만 확장한다. 아래 아키텍처·병렬·�
 
 기본은 `[Role] · [Model Full Name] · [Task]`이며 명시적으로 요청한 모델 이름과 버전을 표시 기준으로 사용한다. 새 생성마다 지원 모델을 task에 맞게 먼저 선택하고 지원하는 도구에서는 model 인자로 명시 요청한다. 요청이 없으면 독립적으로 확인된 모델을 표시 기준으로 사용할 수 있다. 둘 다 없으면 모델을 생략한 `Role · Task`와 `role_action_target`으로 생성한다. 명시 요청값은 requested_model에 기록하고 요청이 없으면 항목을 생략한다. 실행 모델 확인 여부는 별도로 출력하지 않으며 부모 상속을 추측하거나 요청값을 확인값으로 간주하지 않는다.
 
-- `Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정`
-- `Reviewer · 6 Astra · Core 변경 diff·회귀 위험 검토`
-- `QA · 5.6 Luna · 설치·업데이트 절차 동작 검증`
-- `Explorer · 6.1 Sol · 로그인 API 호출 흐름 조사` (requested_model: gpt-6.1-sol)
+- `Implementer · 6 Luna · AI Office Core 보고 규칙 수정`
+- `Reviewer · 6 Luna · Core 변경 diff·회귀 위험 검토`
+- `QA · 6 Luna · 설치·업데이트 절차 동작 검증`
+- `Explorer · 6 Luna · 로그인 API 호출 흐름 조사` (requested_model: gpt-6-luna)
 
-현재 collaboration.spawn_agent 호출의 task_name에 아래 이름을 실제로 전달한다. 할당 메시지에는 원래 제목을 병기하고 채팅 보고에서는 담당 직무·업무 항목에 넣는다. 모델 약칭은 family+점 없는 버전이며 task는 action+target으로 짧게 쓴다. 생성 전에 실제 Role, 모델 약칭과 명시 요청값의 일치(요청이 없으면 독립적으로 확인된 모델과 비교하며 둘 다 없으면 모델 검사 생략), action_target의 수행 내용과 대상을 확인한다. fork_turns는 none 또는 필요한 양의 이력 수로 지정하고 필요한 맥락을 메시지로 전달한다. all 때문에 모델 요청을 생략하지 않는다. 생성 직후 list_agents의 agent_name 경로가 전달한 task_name을 포함하는지 확인한다.
+현재 collaboration.spawn_agent 호출의 task_name에 아래 이름을 실제로 전달한다. 할당 메시지에는 원래 제목을 병기하고 채팅 보고에서는 담당 직무·업무 항목에 넣는다. 모델 약칭은 family+점 없는 버전이며 task는 action+target으로 짧게 쓴다. 생성 전에 실제 Role, 모델 약칭과 명시 요청값의 일치(요청이 없으면 독립적으로 확인된 모델과 비교하며 둘 다 없으면 모델 검사 생략), action_target의 수행 내용과 대상을 확인한다. fork_turns는 기본 none으로 두고 필요한 맥락은 메시지에 담는다. 이전 이력이 필요할 때만 필요한 양의 이력을 지정하고 all은 쓰지 않는다. 생성 직후 list_agents의 agent_name 경로가 전달한 task_name을 포함하는지 확인한다.
 
 | task_name | 표시 제목 |
 |---|---|
 | `explorer_trace_login_api` | Explorer · 로그인 API 호출 흐름 조사 |
-| `explorer_sol61_trace_login_api` | Explorer · 6.1 Sol · 로그인 API 호출 흐름 조사 |
-| `implementer_sol61_fix_ap_tree` | Implementer · 6.1 Sol · AP 트리 수정 |
-| `reviewer_astra6_review_chart_diff` | Reviewer · 6 Astra · 차트 diff 검토 |
-| `qa_luna56_check_tree_selection` | QA · 5.6 Luna · 트리 선택 동작 검증 |
-| `explorer_sol61_trace_agent_names` | Explorer · 6.1 Sol · Codex Agent 목록 이름 흐름 조사 |
+| `explorer_luna6_trace_login_api` | Explorer · 6 Luna · 로그인 API 호출 흐름 조사 |
+| `implementer_luna6_fix_ap_tree` | Implementer · 6 Luna · AP 트리 수정 |
+| `reviewer_luna6_review_chart_diff` | Reviewer · 6 Luna · 차트 diff 검토 |
+| `qa_luna6_check_tree_selection` | QA · 6 Luna · 트리 선택 동작 검증 |
+| `explorer_sol61_trace_agent_names` | Explorer · 6.1 Sol · Codex Agent 목록 이름 흐름 조사 (여러 runtime/UI 흐름의 복합 확인 필요) |
 
 명시 요청이 없고 독립적으로 확인된 모델도 없으면 표시 제목은 `Role · Task`, 생성 인자는 `role_action_target`을 사용하고 requested_model 항목은 생략한다. 이 규칙은 할당과 결과 양식에도 적용한다. 작성·runtime 적용과 정확한 UI 표시의 제한은 [SKILL.md](../SKILL.md)의 담당자 표시 제목을 따른다.
 
@@ -196,8 +196,8 @@ Ticket: [발급한 Ticket ID]
 
 | Agent identifier / 표시 제목 | Role | Task | Model (requested_model) | Complexity | Result |
 |---|---|---|---|---|---|
-| explorer_sol61_trace_login_api / Explorer · 6.1 Sol · 로그인 API 호출 흐름 조사 | Explorer | 조사 범위 | requested_model: gpt-6.1-sol | 선택 | 완료 및 근거 |
-| implementer_sol61_update_report_rules / Implementer · 6.1 Sol · AI Office Core 보고 규칙 수정 | Implementer | 수정 범위 | requested_model: gpt-6.1-sol | 선택 | 변경 및 검증 |
+| explorer_luna6_trace_login_api / Explorer · 6 Luna · 로그인 API 호출 흐름 조사 | Explorer | 조사 범위 | requested_model: gpt-6-luna | 선택 | 완료 및 근거 |
+| implementer_luna6_update_report_rules / Implementer · 6 Luna · AI Office Core 보고 규칙 수정 | Implementer | 수정 범위 | requested_model: gpt-6-luna | 선택 | 변경 및 검증 |
 
 Max Parallel: [관측된 최대 동시 Agent 수; Main 제외]
 
@@ -305,11 +305,11 @@ Model 열에는 명시 요청한 requested_model만 적으며 요청이 없으�
 
 | 식별·모델 항목 | 전달값 또는 실제 확인값 |
 |---|---|
-| task_name | implementer_sol61_update_report_rules |
-| agent_name | /root/implementer_sol61_update_report_rules |
+| task_name | implementer_luna6_update_report_rules |
+| agent_name | /root/implementer_luna6_update_report_rules |
 | 이름 적용 확인 | 관측 경로가 전달한 task_name을 포함하여 일치합니다. 정확한 앱 UI 표시는 미확인입니다. |
-| 표시 제목 | Implementer · 6.1 Sol · 보고 양식 문서 수정 |
-| requested_model | gpt-6.1-sol |
+| 표시 제목 | Implementer · 6 Luna · 보고 양식 문서 수정 |
+| requested_model | gpt-6-luna |
 
 **수행 결과:** SKILL.md와 references/templates.md의 채팅 보고 항목을 수정했습니다.
 

@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.6.1**
+Version: **0.6.2**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -22,7 +22,7 @@ Main은 요구 분석, 코드 읽기, 계획, 영향 판단, 역할·모델 선�
 
 역할 정의는 [roles/](roles)에 있습니다. 현재 runtime이 제공하는 agent_type을 선택하거나, 선택 기능이 없으면 역할의 developer_instructions를 할당 메시지에 전달합니다. 없는 API를 만들지 않으며 위임이 불가능한 경우 제한을 보고합니다. child는 배정된 결과를 보고한 뒤 task를 끝내고 Office를 다시 구성하지 않습니다. 후속 일은 기존 agent를 재사용하며 runtime 종료 기능은 제공되는 범위에서만 사용합니다.
 
-담당자 표시·생성·모델 선택은 [SKILL.md](SKILL.md#담당자-표시-제목)를 따릅니다. 예: `Implementer · 6.1 Sol · AP 트리 수정`. 요청·확인 모델 정보가 모두 없으면 `Role · Task`와 `role_action_target`을 사용합니다. 생성 예시는 [templates.md](references/templates.md)에 있습니다.
+담당자 표시·생성·모델 선택은 [SKILL.md](SKILL.md#담당자-표시-제목)를 따릅니다. 예: `Implementer · 6 Luna · AP 트리 수정`. 요청·확인 모델 정보가 모두 없으면 `Role · Task`와 `role_action_target`을 사용합니다. 생성 예시는 [templates.md](references/templates.md)에 있습니다.
 
 ## Workflow와 Execution Plan
 
@@ -60,6 +60,8 @@ python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone A
 ```
 
 Report·INDEX·필요한 Decision 저장 뒤 실행합니다. `--date`는 스냅샷 기간의 기준일이고 기본값은 지정 timezone의 현재 날짜입니다. 해당 일·주·월 파일 하나씩을 갱신합니다. DB·서버·watcher·실시간 Agent 상태 수집은 추가하지 않습니다. 상세 규칙과 제한은 [Workspace 규칙](references/workspace.md), metadata 예시는 [템플릿](references/templates.md)을 따릅니다.
+
+0.6.2는 일반 범위 업무에서 지원되는 Luna 모델을 우선하고 복합 판단·중요 위험에서만 이유를 밝히고 Sol 이상을 선택하도록 모델 선택 기준을 보완한 PATCH 변경입니다. 자세한 기준은 [모델 선택과 재작업](SKILL.md#모델-선택과-재작업)을 따릅니다.
 
 0.6.1은 모든 채팅 응답의 보고 형식과 전송 전 누락 확인을 강화하고 짧은 질의·확인 예시를 보완한 PATCH 변경입니다.
 
