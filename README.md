@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.5.3**
+Version: **0.5.4**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -26,11 +26,21 @@ Sub Agent 목록의 실제 인스턴스 이름에 `[Role] · [Model Full Name] �
 
 ## Workflow와 Execution Plan
 
-대표 요청 → 기록 대상이면 업무 티켓 생성 → Main 분석 → 필요한 담당자와 모델 선택 → 업무 배정 → 담당자 작업 → 리뷰·검증 → Main 결과 통합·최종 확인 → 업무 보고 → 설정된 기록 저장 → 완료.
+실행 흐름: 대표 요청 → 기록 대상이면 업무 티켓 생성 → Main 분석 → 필요한 담당자와 모델 선택 → 업무 배정 → 담당자 작업 → 리뷰·검증 → Main 결과 통합·최종 확인 → 업무 보고 → 설정된 기록 저장 → 완료.
 
-복잡하거나 영향이 큰 변경은 실제 파일과 흐름을 읽은 뒤 10줄 이내 요약과 필요한 Execution Plan을 만듭니다. Plan은 역할·범위·모델 선택·의존성·검증을 담는 초기안이며 조사 결과에 따라 조정합니다. 작은 변경에는 계획을 만들지 않습니다. [templates.md](references/templates.md)와 [teams.md](references/teams.md)는 현재 사용하던 템플릿과 조합 예시입니다.
+AI Office가 활성화된 Plan Mode에서는 별도 명령 없이 최종 계획을 호스트의 `<proposed_plan>` 안에 `AI OFFICE · WORK ORDER`와 실행 계획이 합쳐진 하나의 문서로 작성합니다. 파일 생성은 요구하지 않습니다. 업무명·목적·Main 책임·Size·Estimated MD·실제 위험을 담고 명시적 요구사항과 조사로 확정할 암묵적 요구사항을 구분합니다. MD는 업무량이며 일정이 아닙니다. 우선순위는 순서에 영향을 줄 때만 쓰고 현재 단계는 `계획 수립`으로 표시합니다. 이미 발급된 AO 티켓만 사용하며 계획만을 위해 새 티켓을 발급하지 않습니다.
 
-업무 티켓은 기록할 가치가 있는 요청 하나를 식별해 Plan, 담당자 작업, Review, QA, Report와 Decision을 연결합니다. 저장 보고서 제목은 `AO-YYYYMMDD-NNN · 구체적인 업무 제목`을 쓰고 같은 요청의 후속 작업은 같은 ID를 유지합니다. 채팅은 아래 공통 보고 제목을 사용하며 티켓은 제목 아래에 한 번만 표시합니다. 단순 질의에는 만들지 않으며 Plan이나 Agent를 강제하지 않습니다. 번호를 확인·예약할 수 없거나 동시 발급 가능성이 있으면 전체 UUID 대체 형식을 사용합니다. 발급·충돌 규칙은 [SKILL.md](SKILL.md), 기록 형식은 [templates.md](references/templates.md)에 있습니다.
+Plan Mode에서는 읽기 전용 조사로 구현에 중요한 미확정 사항을 해소한 뒤 최종 계획을 작성합니다. 코드 수정·Agent 구현 시작·commit·push는 실행 모드에서 진행합니다. 배정 표는 실행 예정 Role·범위·산출물·검증을 담으며 실행으로 전환하면 같은 매핑으로 위임하고 실제 변경 이유를 설명합니다. Main은 분석·판단·통합을 맡고 구현·검증·commit은 Sub Agent에 위임합니다. 작은 작업은 Implementer 한 명이면 충분하며 Reviewer·QA 별도 Agent를 의무 배정하지 않습니다. Researcher/Developer는 Explorer/Implementer의 설명용 별칭이며 새 직무가 아닙니다.
+
+| 크기 | 계획에 담을 내용 |
+|---|---|
+| S | 목적·Size/MD·요구사항·범위와 순서·담당자·검증과 완료 기준 |
+| M | 업무 개요·요구사항·완료한 조사와 남은 실행 검증·배정·순서와 범위·위험과 완료 기준 |
+| L | M에 필요한 아키텍처·의존성·병렬·통합·테스트·롤백·주요 결정만 추가 |
+
+Plan Mode 밖에서는 복잡한 변경의 초기 방향만 10줄 이내로 요약하고 필요한 Execution Plan을 만듭니다. 작은 변경에는 별도 계획을 만들지 않습니다. 10줄 기준은 Plan Mode 최종 계획서에 적용하지 않습니다. 장식용 조직·새 식별자·회의·결재·시간 기록·직급·대화/상태 로그는 추가하지 않습니다. [templates.md](references/templates.md#plan-mode-업무-계획서)의 S/M/L 양식과 [teams.md](references/teams.md)의 조합 예시를 필요한 만큼 사용합니다.
+
+업무 티켓은 기록할 가치가 있는 요청 하나를 식별해 Plan, 담당자 작업, Review, QA, Report와 Decision을 연결합니다. 저장 보고서 제목은 `AO-YYYYMMDD-NNN · 구체적인 업무 제목`을 쓰고 같은 요청의 후속 작업은 같은 ID를 유지합니다. 채팅은 아래 공통 보고 제목을 사용하며 티켓은 제목 아래에 한 번만 표시합니다. 단순 질의에는 만들지 않으며 티켓 때문에 Plan이나 Agent를 강제하지 않습니다. Plan Mode의 계획서는 위 규칙에 따라 자동 작성합니다. 번호를 확인·예약할 수 없거나 동시 발급 가능성이 있으면 전체 UUID 대체 형식을 사용합니다. 발급·충돌 규칙은 [SKILL.md](SKILL.md), 기록 형식은 [templates.md](references/templates.md)에 있습니다.
 
 ## 업무 채팅 보고
 
@@ -45,7 +55,7 @@ Main과 Sub Agent가 채팅에 보내는 업무 답변 자체를 보고 양식�
 
 항목명은 굵게 쓰고 자연스러운 문장으로 충분한 근거를 전달하며 길이를 제한하지 않습니다. 진행 보고는 새 정보만 담고 비교·배정은 표를 사용합니다. 장식용 이모지나 불필요한 반복을 넣지 않으며 직무별 새 양식을 만들지 않습니다. 담당자 식별자·실제 관측 이름·이름 적용 확인·표시 제목과 명시 요청한 requested_model은 담당 직무·업무 항목 안에 유지하며 요청이 없으면 항목을 생략합니다. 실행하지 않은 검증은 `미실행`과 이유를 명시하고, 차단된 진행이나 업무 완료 후 기록 미완료도 구분해 보고합니다.
 
-이는 별도 보고서 생성 기능이 아닙니다. 파일 보고의 metadata와 저장 정책은 독립적으로 유지하며 매 응답마다 파일을 만들지 않습니다. 네 가지 채팅 예시와 저장 보고서 양식은 [templates.md](references/templates.md)에 있습니다.
+Plan Mode의 최종 계획은 위 업무 계획서 양식을 사용하고 기존 보고자·requested_model 규칙을 유지합니다. 이는 별도 보고서 생성 기능이 아닙니다. 파일 보고의 metadata와 저장 정책은 독립적으로 유지하며 매 응답마다 파일을 만들지 않습니다. 네 가지 채팅 예시와 저장 보고서 양식은 [templates.md](references/templates.md)에 있습니다.
 
 ## Report Architecture
 
@@ -90,6 +100,8 @@ python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone A
 ```
 
 Report·INDEX·필요한 Decision 저장 뒤 실행합니다. `--date`는 스냅샷 기간의 기준일이고 기본값은 지정 timezone의 현재 날짜입니다. 해당 일·주·월 파일 하나씩을 갱신합니다. DB·서버·watcher·실시간 Agent 상태 수집은 추가하지 않습니다. 상세 규칙과 제한은 [Workspace 규칙](references/workspace.md), metadata 예시는 [템플릿](references/templates.md)을 따릅니다.
+
+0.5.4는 Plan Mode의 통합 업무 계획서와 크기별 실행 계획 작성 규칙을 보완한 PATCH 변경입니다.
 
 0.5.3은 모델 표기를 명시 요청값 중심으로 정리한 운영 규칙 보완입니다.
 
