@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.6.0**
+Version: **0.6.1**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -34,7 +34,7 @@ Plan Mode 최종 계획은 `<proposed_plan>` 안의 `AI OFFICE · WORK ORDER`로
 
 ## 업무 채팅 보고
 
-제목·보고자·발급된 Ticket을 표시하고 결과부터 전달합니다. 작은 작업은 **결과·변경 / 검증·제한 / 상태·후속 조치** 세 묶음, 복잡한 작업은 상세 양식을 사용합니다. 필수 정보와 담당자 식별·모델 표시 규칙은 [SKILL.md](SKILL.md#공통-응답문서-스타일), 작성 예시는 [templates.md](references/templates.md)가 원본입니다. 일반 질의응답에 보고 양식이나 파일 생성을 강제하지 않습니다.
+제목·보고자·발급된 Ticket을 표시하고 결과부터 전달합니다. 작은 작업은 **결과·변경 / 검증·제한 / 상태·후속 조치** 세 묶음, 복잡한 작업은 상세 양식을 사용합니다. 필수 정보와 담당자 식별·모델 표시 규칙은 [SKILL.md](SKILL.md#공통-응답문서-스타일), 작성 예시는 [templates.md](references/templates.md)가 원본입니다. 모든 착수·진행·최종 응답에 보고 양식을 항상 적용하며 일반 질의응답·아이디어·확인도 제목·보고자와 핵심 답변을 짧게 담습니다. 상위 지침과 사용자 명시 출력 제약을 우선하고 티켓·파일 저장 대상은 기존 규칙을 유지합니다.
 
 ## Report Architecture
 
@@ -60,6 +60,8 @@ python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone A
 ```
 
 Report·INDEX·필요한 Decision 저장 뒤 실행합니다. `--date`는 스냅샷 기간의 기준일이고 기본값은 지정 timezone의 현재 날짜입니다. 해당 일·주·월 파일 하나씩을 갱신합니다. DB·서버·watcher·실시간 Agent 상태 수집은 추가하지 않습니다. 상세 규칙과 제한은 [Workspace 규칙](references/workspace.md), metadata 예시는 [템플릿](references/templates.md)을 따릅니다.
+
+0.6.1은 모든 채팅 응답의 보고 형식과 전송 전 누락 확인을 강화하고 짧은 질의·확인 예시를 보완한 PATCH 변경입니다.
 
 0.6.0은 최소 절차·위험 기반 검증 선택·짧은 위임과 보고·UUID 기본 발급·문서 책임·재사용 지식을 정리하고 기록 차단·실패 이유·동일 티켓 재개를 보완한 MINOR 변경입니다.
 
