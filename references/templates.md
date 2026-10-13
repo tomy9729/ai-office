@@ -125,12 +125,17 @@ M의 내용에 필요한 항목만 확장한다. 아래 아키텍처·병렬·�
 
 ## 담당자 목록 이름과 생성 인자 예시
 
-기본은 `[Role] · [Model Full Name] · [Task]`이며 명시적으로 요청한 모델 이름과 버전을 표시 기준으로 사용한다. 새 생성마다 지원 모델을 task에 맞게 먼저 선택하고 지원하는 도구에서는 model 인자로 명시 요청한다. 요청이 없으면 독립적으로 확인된 모델을 표시 기준으로 사용할 수 있다. 둘 다 없으면 모델을 생략한 `Role · Task`와 `role_action_target`으로 생성한다. 명시 요청값은 requested_model에 기록하고 요청이 없으면 항목을 생략한다. 실행 모델 확인 여부는 별도로 출력하지 않으며 부모 상속을 추측하거나 요청값을 확인값으로 간주하지 않는다.
+기본은 `[Role] · [Model Full Name] · [Task]`이며 명시적으로 요청한 모델 이름과 버전을 표시 기준으로 사용한다. 새 배정과 후속 배정마다 runtime 지원 모델 중 task에 맞는 모델을 먼저 선택한다. 기존 agent는 선택 모델과 역할·담당 범위가 맞고 필요한 리뷰 독립성을 유지할 때만 재사용한다. 모델 비교는 기존 배정의 requested_model 또는 독립 확인한 실제 모델을 근거로 하며, 둘 다 없으면 모델을 추정하지 않는다. requested_model은 배정 비교 근거일 뿐 실제 실행 모델 확인값이나 models metadata가 아니다. 역할·범위가 다르거나 독립 리뷰를 맡길 수 없으면 새 agent를 배정한다. 다른 모델로 전환할 때는 새 agent에 파일·확정 사항·남은 작업·검증 기준을 전달한다. 선택 모델을 쓸 수 없으면 적합한 지원 대안과 이유를 밝힌다. 지원하는 도구에서는 새 agent 생성 인자에 모델을 명시 요청한다. 요청이 없으면 독립적으로 확인된 모델을 표시 기준으로 사용할 수 있다. 둘 다 없으면 모델을 생략한 `Role · Task`와 `role_action_target`으로 생성한다. 명시 요청값은 requested_model에 기록하고 요청이 없으면 항목을 생략한다. 실행 모델 확인 여부는 별도로 출력하지 않으며 부모 상속을 추측하거나 요청값을 확인된 실제 모델로 간주하지 않는다.
 
 - `Implementer · 6 Luna · AI Office Core 보고 규칙 수정`
-- `Reviewer · 6 Luna · Core 변경 diff·회귀 위험 검토`
+- `Reviewer · 6.1 Sol · Core 변경 정확성·회귀·설계 판단 리뷰` (판단 리뷰)
 - `QA · 6 Luna · 설치·업데이트 절차 동작 검증`
 - `Explorer · 6 Luna · 로그인 API 호출 흐름 조사` (requested_model: gpt-6-luna)
+- `Implementer · 6 Luna · 로그인 API 수정` (조사와 수정 범위가 명확함)
+- `QA · 6 Luna · 로그인 API 동작 검증` (정해진 기대값 확인)
+- `Reviewer · 6.1 Sol · 로그인 API 변경 판단 리뷰` (정확성·회귀·설계 판단이 필요하여 Sol 선택)
+
+복합 원인 분석이 필요한 흐름은 `Explorer · 6.1 Sol` 조사 → 원인 확정 뒤 파일·확정 사항·남은 작업·검증 기준을 전달한 `Implementer · 6 Luna` 제한 구현 → 정해진 기대값을 확인하는 `QA · 6 Luna` → 정확성·회귀를 판단하는 독립 `Reviewer · 6.1 Sol` 순서로 배정한다. 모델이 같아도 QA와 Reviewer는 역할이 다르므로 구현 agent를 그대로 재사용하지 않는다.
 
 현재 collaboration.spawn_agent 호출의 task_name에 아래 이름을 실제로 전달한다. 할당 메시지에는 원래 제목을 병기하고 채팅 보고에서는 담당 직무·업무 항목에 넣는다. 모델 약칭은 family+점 없는 버전이며 task는 action+target으로 짧게 쓴다. 생성 전에 실제 Role, 모델 약칭과 명시 요청값의 일치(요청이 없으면 독립적으로 확인된 모델과 비교하며 둘 다 없으면 모델 검사 생략), action_target의 수행 내용과 대상을 확인한다. fork_turns는 기본 none으로 두고 필요한 맥락은 메시지에 담는다. 이전 이력이 필요할 때만 필요한 양의 이력을 지정하고 all은 쓰지 않는다. 생성 직후 list_agents의 agent_name 경로가 전달한 task_name을 포함하는지 확인한다.
 
@@ -139,7 +144,7 @@ M의 내용에 필요한 항목만 확장한다. 아래 아키텍처·병렬·�
 | `explorer_trace_login_api` | Explorer · 로그인 API 호출 흐름 조사 |
 | `explorer_luna6_trace_login_api` | Explorer · 6 Luna · 로그인 API 호출 흐름 조사 |
 | `implementer_luna6_fix_ap_tree` | Implementer · 6 Luna · AP 트리 수정 |
-| `reviewer_luna6_review_chart_diff` | Reviewer · 6 Luna · 차트 diff 검토 |
+| `reviewer_sol61_review_chart_diff` | Reviewer · 6.1 Sol · 차트 diff 판단 리뷰 |
 | `qa_luna6_check_tree_selection` | QA · 6 Luna · 트리 선택 동작 검증 |
 | `explorer_sol61_trace_agent_names` | Explorer · 6.1 Sol · Codex Agent 목록 이름 흐름 조사 (여러 runtime/UI 흐름의 복합 확인 필요) |
 
