@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.6.3**
+Version: **0.7.0**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -13,6 +13,7 @@ Main은 요구 분석, 코드 읽기, 계획, 영향 판단, 역할·모델 선�
 
 | Role / 직무 | 책임 |
 |---|---|
+| Planner / 요구사항 정의 담당 | 중요한 미확정 요구 확인·쉬운 질문·실행 명세 전달 |
 | Explorer / 조사 담당 | 진입점·호출 흐름·기존 패턴·영향 범위 조사 |
 | Debugger / 문제 분석 담당 | 재현·원인 가설 검증·근본 원인 조사 |
 | Implementer / 개발 담당 | Main이 정한 범위의 최소 구현과 검증 |
@@ -20,13 +21,13 @@ Main은 요구 분석, 코드 읽기, 계획, 영향 판단, 역할·모델 선�
 | QA / 검증 담당 | 요구사항에 연결된 실제 실행 검증 |
 | Specialist / 전문 담당 | 지정된 기술·도메인 조사와 제한된 자문 |
 
-역할 정의는 [roles/](roles)에 있습니다. 현재 runtime이 제공하는 agent_type을 선택하거나, 선택 기능이 없으면 역할의 developer_instructions를 할당 메시지에 전달합니다. 없는 API를 만들지 않으며 위임이 불가능한 경우 제한을 보고합니다. child는 배정된 결과를 보고한 뒤 task를 끝내고 Office를 다시 구성하지 않습니다. 후속 task도 모델을 다시 선택하고, 모델·역할·담당 범위가 맞으며 리뷰 독립성을 유지하는 agent만 재사용합니다. 모델은 기존 배정의 requested_model 또는 독립 확인값으로 비교하고, 둘 다 없으면 추정하지 않습니다. 종료 기능은 runtime이 제공하는 범위에서만 사용합니다.
+역할 정의는 [roles/](roles)에 있습니다. 현재 runtime이 제공하는 agent_type을 선택하거나, 필요한 office-* 값이 없으면 지원되는 일반 agent(예: default)에 원본 역할의 developer_instructions와 task 조건을 전달합니다. office-planner가 현재 세션에 없으면 이 fallback을 쓰며 설치 후 즉시 도구에 나타난다고 가정하지 않습니다. 없는 API를 만들지 않으며 위임이 불가능한 경우 제한을 보고합니다. child는 배정된 결과를 보고한 뒤 task를 끝내고 Office를 다시 구성하지 않습니다. 후속 task도 모델을 다시 선택하고, 모델·역할·담당 범위가 맞으며 리뷰 독립성을 유지하는 agent만 재사용합니다. 모델은 기존 배정의 requested_model 또는 독립 확인값으로 비교하고, 둘 다 없으면 추정하지 않습니다. 종료 기능은 runtime이 제공하는 범위에서만 사용합니다.
 
 담당자 표시·생성·모델 선택은 [SKILL.md](SKILL.md#담당자-표시-제목)를 따릅니다. 예: `Implementer · 6 Luna · AP 트리 수정`. 요청·확인 모델 정보가 모두 없으면 `Role · Task`와 `role_action_target`을 사용합니다. 생성 예시는 [templates.md](references/templates.md)에 있습니다.
 
 ## Workflow와 Execution Plan
 
-요청 → 필요한 담당자 배정 → 수행·리뷰·검증 → Main 통합 → 보고·기록 순서로 진행합니다. 업무량과 위험을 독립적으로 판단하고 작은 변경은 Implementer 한 명으로 처리합니다. 최소 절차·독립 리뷰·QA 선택 기준은 [SKILL.md](SKILL.md#최소-절차와-검증-선택), 팀 예시는 [teams.md](references/teams.md)를 참고합니다.
+요청 → Main의 Planner Gate 확인 → 필요 시 Planner 요구사항 정의 → Main 담당자 배정 → 수행·리뷰·검증 → Main 통합 → 보고·기록 순서로 진행합니다. 명확한 요청은 Main이 PLANNER_PASS로 즉시 통과시키고, 중요한 모호함만 Planner가 확인합니다. NEED_INFO는 의존 구현만 보류하며 독립 조사·작업은 계속합니다. READY 요약·명세, Main 질문 중계와 재질문 예시는 [Planner 운영](references/planner.md), 필수 경계는 [Planner Gate](SKILL.md#planner-gate)를 따릅니다. Planner 상태는 기존 업무·전체 metadata와 분리합니다. 업무량과 위험을 독립적으로 판단하고 작은 변경은 Implementer 한 명으로 처리합니다. 최소 절차·독립 리뷰·QA 선택 기준은 [SKILL.md](SKILL.md#최소-절차와-검증-선택), 팀 예시는 [teams.md](references/teams.md)를 참고합니다.
 
 Plan Mode 최종 계획은 `<proposed_plan>` 안의 `AI OFFICE · WORK ORDER`로 작성합니다. 크기에 맞는 양식은 [templates.md](references/templates.md#plan-mode-업무-계획서), 실행 경계와 선택 규칙은 [SKILL.md](SKILL.md#plan-mode-업무-계획서)가 원본입니다.
 
@@ -61,6 +62,8 @@ python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone A
 
 Report·INDEX·필요한 Decision 저장 뒤 실행합니다. `--date`는 스냅샷 기간의 기준일이고 기본값은 지정 timezone의 현재 날짜입니다. 해당 일·주·월 파일 하나씩을 갱신합니다. DB·서버·watcher·실시간 Agent 상태 수집은 추가하지 않습니다. 상세 규칙과 제한은 [Workspace 규칙](references/workspace.md), metadata 예시는 [템플릿](references/templates.md)을 따릅니다.
 
+0.7.0은 Planner 역할, 구현 전 요구사항 Gate와 실행 중 재질문·명세 전달을 추가한 MINOR 변경입니다. Main의 최종 책임·역할과 모델의 독립 선택·기존 업무 및 전체 상태·Plan Mode 실행 경계를 유지합니다.
+
 0.6.3은 매 후속 task에서 모델을 다시 선택하고 모델·역할·담당 범위와 리뷰 독립성이 맞는 agent만 재사용하도록 보완한 PATCH 변경입니다. 요청 모델과 실제 모델의 구분, Sol 이상 판단 리뷰와 실행 한도 처리도 명확히 했습니다. 자세한 기준은 [모델 선택과 재작업](SKILL.md#모델-선택과-재작업), [Agent 실행과 종료](SKILL.md#agent-실행과-종료)를 따릅니다.
 
 0.6.2는 일반 범위 업무에서 지원되는 Luna 모델을 우선하고 복합 판단·중요 위험에서만 이유를 밝히고 Sol 이상을 선택하도록 모델 선택 기준을 보완한 PATCH 변경입니다. 자세한 기준은 [모델 선택과 재작업](SKILL.md#모델-선택과-재작업)을 따릅니다.
@@ -89,7 +92,7 @@ AI Office는 일을 수행하는 방식을 정합니다. 프로젝트 AGENTS.md�
 
 회사 환경 예: `AI Office + 회사 전문 Plugin + 프로젝트 AGENTS.md`. Explorer는 프로젝트 조사 Skill을, Reviewer는 회사 검토 Skill을, QA는 해당 프로젝트 검증 기준을 조합합니다. 기존 회사 Plugin은 그대로 사용합니다.
 
-개인 환경 예: `AI Office + my-web-app/AGENTS.md + 필요한 project-specific Skill`. 회사 Plugin 없이도 여섯 역할, 계획·위임·통합·검증·보고·완료 판단을 사용할 수 있습니다.
+개인 환경 예: `AI Office + my-web-app/AGENTS.md + 필요한 project-specific Skill`. 회사 Plugin 없이도 일곱 역할, 계획·위임·통합·검증·보고·완료 판단을 사용할 수 있습니다.
 
 ## 설치
 
@@ -112,7 +115,7 @@ Get-ChildItem -LiteralPath "$officeInstall/roles" -Filter 'office-*.toml' | ForE
 }
 ```
 
-링크 권한이 없으면 동명 역할을 먼저 백업하고 원본과 차이를 검토한 뒤 여섯 office 역할만 복사합니다. 다른 custom agent는 건드리지 않습니다.
+링크 권한이 없으면 동명 역할을 먼저 백업하고 원본과 차이를 검토한 뒤 일곱 office 역할만 복사합니다. 다른 custom agent는 건드리지 않습니다.
 
 ```powershell
 $officeInstall = "$HOME/.agents/skills/ai-office"
@@ -121,7 +124,7 @@ Get-ChildItem -LiteralPath "$officeInstall/roles" -Filter 'office-*.toml' |
     Copy-Item -Destination "$HOME/.codex/agents"
 ```
 
-이 PC의 기존 설치는 `~/.codex/skills/ai-office` checkout과 `~/.codex/agents`의 여섯 역할 복사본을 유지합니다. 설치본 역할을 직접 편집하지 않고 repo의 roles를 원본으로 사용합니다. 업데이트 후에는 아래 동기화 명령을 실행합니다. 링크를 쓸 수 있으면 checkout 하나가 Skill과 역할의 공통 원본입니다. 역할 파일은 name, description, developer_instructions를 사용하며 config.toml 변경은 필요하지 않습니다. 현재 세션의 catalog가 즉시 갱신된다고 가정하지 말고 다음 세션에서 Skill과 역할이 발견되는지 확인합니다.
+기존 복사 설치는 `~/.codex/skills/ai-office` checkout과 `~/.codex/agents`의 일곱 역할 복사본을 유지합니다. 설치본 역할을 직접 편집하지 않고 repo의 roles를 원본으로 사용합니다. 업데이트 후에는 아래 동기화 명령을 실행합니다. 링크를 쓸 수 있으면 checkout 하나가 Skill과 역할의 공통 원본입니다. 역할 파일은 name, description, developer_instructions를 사용하며 config.toml 변경은 필요하지 않습니다. 업데이트로 office-planner.toml이 새로 생겼다면 해당 파일만 추가 복사할 수 있고 기존 여섯 역할을 불필요하게 덮어쓰지 않습니다. 현재 세션의 catalog가 즉시 갱신된다고 가정하지 말고 다음 세션에서 Skill과 역할이 발견되는지 확인합니다.
 
 전역 AGENTS.md에는 [examples/AGENTS.example.md](examples/AGENTS.example.md)의 진입점과 필요한 개인 설정만 둡니다. 프로젝트 지침은 프로젝트 AGENTS.md에 둡니다. Skill 폴더 전체를 junction으로 연결하는 대신 실제 checkout을 발견 경로에 둡니다.
 
@@ -136,7 +139,7 @@ git -C "$HOME/.agents/skills/ai-office" pull --ff-only
 
 기존 경로 설치는 위 명령의 경로를 `~/.codex/skills/ai-office`로 바꿉니다. 로컬 변경이 있으면 먼저 검토·commit하거나 별도 보존하며 강제로 덮어쓰지 않습니다. 연결된 역할은 checkout 갱신을 따라갑니다.
 
-복사 설치는 pull 후 역할 설치본에 임의 변경이 없는지 먼저 확인하고 아래 여섯 역할만 다시 동기화합니다. 설치 경로에 맞게 officeInstall을 지정합니다.
+복사 설치는 pull 후 역할 설치본에 임의 변경이 없는지 먼저 확인하고 아래 일곱 역할만 다시 동기화합니다. 설치 경로에 맞게 officeInstall을 지정합니다.
 
 ```powershell
 $officeInstall = "$HOME/.agents/skills/ai-office"
@@ -158,6 +161,7 @@ ai-office/
 ├─ .gitignore
 ├─ .gitattributes
 ├─ roles/office-*.toml
+├─ references/planner.md
 ├─ references/teams.md
 ├─ references/templates.md
 ├─ references/workspace.md

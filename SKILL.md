@@ -17,6 +17,7 @@ AI Office는 회사·프로젝트에 종속되지 않는 Agent 운영, 역할·�
 
 | Sub Agent Role | 보고자 표시 |
 |---|---|
+| Planner | Planner · 요구사항 정의 담당 |
 | Explorer | Explorer · 조사 담당 |
 | Debugger | Debugger · 문제 분석 담당 |
 | Implementer | Implementer · 개발 담당 |
@@ -41,8 +42,18 @@ User는 대표, Main은 업무 조율자, Sub Agent는 배정된 업무의 담�
 
 - Main은 요구 분석, 조사·계획, 코드 읽기, 영향 판단, Concept/모델 선택, 결과 통합·리뷰·최종 검증을 책임집니다. 코드 쓰기와 test/lint/typecheck/build/commit 실행은 담당 Sub Agent에 위임합니다. Sub Agent는 배정된 작업을 수행하며 기본적으로 새 하위 agent를 만들지 않습니다.
 - Role/Concept과 Model은 독립적으로 선택합니다. 모델을 직무에 고정하지 말고 task의 난이도, 위험, 맥락 의존성에 맞춥니다. 일반 업무는 요구를 충족하는 충분한 모델을 우선하고 높은 정확도나 추론이 꼭 필요할 때만 그에 맞는 수행 역량의 모델을 씁니다.
-- 필요한 Concept 파일만 읽습니다: [Explorer 조사 담당](roles/office-explorer.toml), [Debugger 문제 분석 담당](roles/office-debugger.toml), [Implementer 개발 담당](roles/office-implementer.toml), [Reviewer 리뷰 담당](roles/office-reviewer.toml), [QA 검증 담당](roles/office-qa.toml), [Specialist 전문 담당](roles/office-specialist.toml). 같은 직무를 여러 명 쓸 때 각자 고유 이름과 비겹치는 범위를 정합니다.
+- 필요한 Concept 파일만 읽습니다: [Planner 요구사항 정의 담당](roles/office-planner.toml), [Explorer 조사 담당](roles/office-explorer.toml), [Debugger 문제 분석 담당](roles/office-debugger.toml), [Implementer 개발 담당](roles/office-implementer.toml), [Reviewer 리뷰 담당](roles/office-reviewer.toml), [QA 검증 담당](roles/office-qa.toml), [Specialist 전문 담당](roles/office-specialist.toml). 같은 직무를 여러 명 쓸 때 각자 고유 이름과 비겹치는 범위를 정합니다.
 - TOML은 역할 지침이며 agent를 자동 생성하거나 권한을 바꾸지 않습니다. 실행 도구의 권한 경계는 별도로 지킵니다.
+
+## Planner Gate
+
+- Main은 모든 요청에서 구현에 앞서 목표·범위·완료 기준과 중요한 미확정 결정을 확인합니다. 명확한 오타, 정확한 파일·변경 내용 지정, 단순 포맷 변경, 조건이 충분한 요청은 Main이 `PLANNER_PASS`로 즉시 통과시킬 수 있습니다. 모든 요청에 새 agent나 질문 단계를 강제하지 않습니다.
+- 결과 방향·구조·작업량·사용자 선호·되돌리기 어려운 선택·큰 재작업에 영향을 주는 모호함이 있으면 [Planner](roles/office-planner.toml)를 배정합니다. Planner는 빠진 요구사항을 능동적으로 발견하고 질문·조사로 실행 가능한 명세를 만듭니다. 사소하고 쉽게 변경할 수 있는 세부사항은 직접 판단합니다. “알아서 해”나 추천 표시는 중요한 사용자 결정을 확정한 근거가 아닙니다.
+- Planner의 내부 판단은 `NEED_INFO / READY / PLANNER_PASS`입니다. `NEED_INFO`면 해당 결정에 의존하는 구현만 보류하며 읽기 조사와 독립 작업은 계속합니다. 답변 대기·시간 경과를 승인으로 간주하지 않습니다. 이 판단은 업무·전체 metadata의 `COMPLETED / PARTIAL / BLOCKED`를 대체하거나 새 metadata 상태를 추가하지 않습니다.
+- Planner는 질문을 Main에 반환하고 task를 끝냅니다. Main이 현재 runtime에서 지원하는 사용자 질문 도구 또는 채팅으로 중계하고, 답변·확정 사항·남은 질문을 Planner에 다시 전달합니다. child가 사용자에게 직접 질문한 채 응답을 기다리는 구조를 전제하지 않습니다. Main은 사용자 소통·역할/모델 선택·통합·최종 판단 책임을 유지합니다.
+- `READY`에서는 사용자가 이해할 수 있는 요구사항 요약을 먼저 제시하고 [Planner 명세](references/planner.md#main-전달)를 전달합니다. 중대한 미결정이 남으면 READY로 넘기지 않습니다. Main은 사용자 확정 사항과 Planner의 작은 결정을 구분해 보존하고 이를 임의로 변경하지 않습니다. 요약 자체가 새 승인 단계를 만들지는 않으며 기존 Plan Mode 승인·실행 경계와 프로젝트 규칙을 그대로 지킵니다.
+- 실행 중 요구사항 충돌, 예상 밖 기술 제약, 결과 차이가 큰 구현 대안, 범위 급증, 완료 기준을 위한 새 결정이나 중요한 사용자 의도 추론이 필요하면 해당 의존 작업을 멈추고 Planner를 통해 재확인합니다. 기존 사용자 결정과 새 사실을 전달하고 나머지 독립 작업은 계속합니다.
+- 세부 검토 항목·질문 UX·전달 형식·시나리오는 [Planner 운영](references/planner.md)을 따릅니다. Planner에도 기존 역할과 동일한 독립 모델 선택·보고·작업 종료 규칙을 적용합니다.
 
 ## 업무 티켓
 
@@ -56,11 +67,11 @@ User는 대표, Main은 업무 조율자, Sub Agent는 배정된 업무의 담�
 
 ## 작업 운영
 
-1. 실제 파일, 호출 경로, 기존 구현과 검증 방법을 확인하고 사실과 추론을 구분합니다. 실행 모드의 기록 대상 요청이면 업무 티켓을 발급하며 Plan Mode에서는 기존 티켓만 사용합니다. 일의 크기와 불확실성을 판단하며 작고 명확한 일은 필요한 한 명에게 목적·범위·제약·검증 기준만 짧게 전달합니다. 후속 작업도 모델을 다시 선택하고 모델·역할·담당 범위가 맞으며 리뷰 독립성을 유지하는 기존 agent만 재사용합니다.
+1. Planner Gate를 확인한 뒤 실제 파일, 호출 경로, 기존 구현과 검증 방법을 확인하고 사실과 추론을 구분합니다. 실행 모드의 기록 대상 요청이면 업무 티켓을 발급하며 Plan Mode에서는 기존 티켓만 사용합니다. 일의 크기와 불확실성을 판단하며 작고 명확한 일은 필요한 한 명에게 목적·범위·제약·검증 기준만 짧게 전달합니다. 후속 작업도 모델을 다시 선택하고 모델·역할·담당 범위가 맞으며 리뷰 독립성을 유지하는 기존 agent만 재사용합니다.
 2. Plan Mode에서는 아래 업무 계획서 규칙을 자동 적용합니다. Plan Mode 밖에서는 복잡하거나 영향이 큰 변경의 초기 방향을 10줄 이내로 요약하고 필요하면 Execution Plan을 만듭니다. Plan Mode 밖의 작은 변경에는 별도 계획을 만들지 않습니다. 초기 요약의 10줄 기준은 Plan Mode의 최종 계획서에 적용하지 않습니다.
 3. 독립 작업이고 병렬 이득이 있을 때만 여러 명을 투입합니다. 변경이 작거나 수정 영역이 겹치거나 통합 비용이 크면 인원과 단계를 줄입니다. 같은 파일을 읽는 독립 가설 조사는 병렬화할 수 있지만 겹치는 파일을 쓰는 일은 순차화합니다. 구현 후 리뷰와 QA는 가능하면 병렬로 진행합니다. 현재 세션의 동시 실행 한도는 도구에서 확인하고 계획에만 반영하며 다음 세션의 고정 설정으로 기록하지 않습니다. 한도에 도달하면 진행 중 task 종료를 기다리고, 슬롯이 해제되지 않을 때만 runtime이 제공하는 종료 방법을 사용합니다. 한도만을 이유로 task에 부적합한 모델에 배정하지 않습니다.
 4. 새 배정과 모든 후속 배정 전에 runtime이 지원하는 모델을 확인하고 task에 필요한 수행 역량의 모델을 선택합니다. task의 난이도·위험·맥락 의존성으로 선택하며 역할, 프로젝트 전체 규모, 이전 배정 모델은 근거가 아닙니다. 기존 agent는 선택 모델과 역할·담당 범위가 맞고 필요한 리뷰 독립성을 유지할 때만 재사용합니다. 모델 비교는 기존 배정에 명시한 requested_model 또는 독립적으로 확인된 실제 모델을 근거로 합니다. 현재 list_agents는 모델을 반환하지 않으므로 이름이나 부모 이력만으로 모델을 추정하지 않습니다. 둘 다 확인할 수 없으면 재사용하지 말고 새 agent를 생성합니다. requested_model은 배정 비교 근거일 뿐 실제 실행 모델 확인값이나 models metadata가 아닙니다. 역할·범위가 다르거나 독립 리뷰를 맡길 수 없는 경우 적합한 다른 agent를 새로 배정합니다. 예를 들어 Sol Implementer를 Sol Reviewer로 재사용해 자신의 변경을 리뷰하게 하지 않습니다. 새 agent를 만들 때 도구가 지원하면 선택 모델을 생성 인자의 model에 명시하고, 모델 불일치로 전환할 때는 파일·확정 사항·남은 작업·검증 기준을 전달합니다. 선택 모델을 쓸 수 없으면 task에 적합한 지원 모델과 선택 이유를 밝힙니다. 현재 collaboration.spawn_agent에서 모델을 명시할 때 fork_turns는 기본 none으로 지정하고 필요한 맥락을 할당 메시지에 전달합니다. 이전 이력이 실제로 필요할 때만 필요한 양의 이력을 지정하며 all은 사용하지 않습니다. 표시 기준은 명시 요청한 모델이며 요청값은 requested_model에 기록합니다. 요청이 없으면 독립적으로 확인된 모델만 표시 기준으로 사용할 수 있습니다. 둘 다 없으면 모델을 생략한 `Role · Task`와 `role_action_target`으로 생성합니다. 모델 정보 때문에 실행을 중단하거나 확인 여부를 별도로 보고하지 않습니다. 이름 관측 실패·UI 표시 불일치도 실행 중단 사유가 아니며 기존 이름 확인 규칙에 따라 근거와 제한을 보고합니다. 부모 상속 모델을 추측하거나 요청값을 확인된 실제 모델로 간주하지 않습니다. 일반적인 도구 실패만으로 모델을 올리지 않습니다.
-5. runtime이 custom-agent 선택을 제공하면 선택된 TOML을 사용합니다. 현재 collaboration.spawn_agent가 office-* agent_type을 제공하면 해당 값을 선택합니다. agent 선택 인자가 없는 runtime에서는 TOML의 developer_instructions와 task 조건을 메시지에 담습니다. 없는 인자나 API를 만들지 않습니다. Concept 형식을 적용할 수 없거나 위임 도구가 없으면 위임 대상 작업을 직접 수행하지 말고 제한을 보고합니다.
+5. runtime이 custom-agent 선택을 제공하면 선택된 TOML을 사용합니다. 현재 collaboration.spawn_agent가 office-* agent_type을 제공하면 해당 값을 선택합니다. agent 선택 인자가 없거나 필요한 office-* 값이 지원되지 않는 runtime에서는 지원되는 일반 agent(예: default)에 원본 TOML의 developer_instructions와 task 조건을 메시지로 전달합니다. 현재 세션에 office-planner agent_type이 없으면 이 fallback을 사용하며 설치만으로 현재 세션 도구가 바뀐다고 가정하지 않습니다. 없는 인자나 API를 만들지 않습니다. Concept 형식을 적용할 수 없거나 위임 도구가 없으면 위임 대상 작업을 직접 수행하지 말고 제한을 보고합니다.
 6. 각 할당은 **문제·완료 조건 / 담당 범위·작업 경계 / 보존할 동작 / 검증 방법과 기대 결과**의 네 묶음을 먼저 전달합니다. 티켓·업무 제목·표시 제목·요청 모델 등 작업별 식별 정보도 전달합니다. 역할·공통 보고 양식은 담당자가 접근 가능한 원본을 참조하고 접근할 수 없으면 필요한 내용을 메시지에 포함합니다. 여러 agent가 함께 작업하며 다른 사람의 변경을 되돌리지 않아야 한다는 제약을 유지합니다.
 7. 요구사항을 만족하는 최소 범위만 바꿉니다. 필수 제약과 구현 가이드를 구분하고 확인하지 않은 파일·API·타입을 지어내지 않습니다. 중요한 미확정 사항만 질문하며 독립적으로 진행할 수 있는 일은 계속합니다.
 8. Main은 결과 충돌을 해결하고 diff와 실제 검증을 확인합니다. 결함은 원인, 근거, 수정 범위, 기대 결과를 정해 재위임합니다.
@@ -106,7 +117,7 @@ UI 상호작용·통합·환경 의존 동작은 실행 검증이 필요합니�
 - 업무 구조는 실제 분석·판단·배정·구현·검증에 필요한 내용을 정리하는 데 사용합니다. 업무명, 목적, Main 책임, Size(S/M/L), Estimated MD와 실제 위험을 적습니다. MD는 업무량 추정이며 일정·마감·실행 시간과 구분합니다. 우선순위는 작업 순서를 바꿀 때만 적고 현재 단계는 `계획 수립`으로 표시합니다. 새 생명주기나 상태 체계는 만들지 않습니다.
 - 명시적 요구사항과 코드·흐름 조사로 확인해야 하는 암묵적 요구사항을 분리합니다. Plan Mode에서는 읽기 전용으로 조사하며 구현 방향에 영향을 주는 미확정 사항을 최종 계획 전에 해소합니다. 구현 뒤 확인할 검증은 조사 사실과 구분하며 구현 결정을 담당자에게 떠넘기지 않습니다.
 - Plan Mode에서는 코드 수정, Agent 구현 작업 시작, commit·push를 하지 않습니다. 배정 표는 실행 예정이며 실제 생성·수행·검증 완료로 표시하지 않습니다. 실행으로 전환하면 계획의 역할·범위·산출물·검증 매핑대로 위임하고 실제 변경이 필요하면 이유와 변경 내용을 설명합니다.
-- Main은 분석·판단·통합과 최종 확인을 맡고 구현·test/lint/typecheck/build·commit은 Sub Agent에 위임합니다. 공식 직무는 Explorer, Debugger, Implementer, Reviewer, QA, Specialist만 사용합니다. Researcher는 Explorer, Developer는 Implementer를 설명하는 별칭일 뿐 새 Role이 아닙니다. 작은 작업에는 Implementer 한 명으로 충분하며 Reviewer와 QA를 별도 Agent로 의무 배정하지 않습니다.
+- Main은 분석·판단·통합과 최종 확인을 맡고 구현·test/lint/typecheck/build·commit은 Sub Agent에 위임합니다. 공식 직무는 Planner, Explorer, Debugger, Implementer, Reviewer, QA, Specialist만 사용합니다. Researcher는 Explorer, Developer는 Implementer를 설명하는 별칭일 뿐 새 Role이 아닙니다. 작은 작업에는 Implementer 한 명으로 충분하며 Reviewer와 QA를 별도 Agent로 의무 배정하지 않습니다.
 - S는 목적·Size/MD·요구사항·범위와 순서·담당자·검증과 완료 기준을 짧게 담습니다. M은 업무 개요·요구사항·완료한 조사와 남은 실행 검증·배정 표·순서와 범위·위험과 완료 기준을 담습니다. L은 M을 바탕으로 필요한 아키텍처·의존성·병렬 작업·통합·테스트·롤백·주요 결정만 추가합니다. 크기만으로 역할과 항목을 늘리지 않습니다.
 - 장식용 부서·새 식별자·회의·결재자·시간 기록·직급·대화/상태 로그는 추가하지 않습니다. [S/M/L 템플릿](references/templates.md#plan-mode-업무-계획서)에서 필요한 항목만 사용하고 파일 보고 metadata·저장 정책은 유지합니다.
 
@@ -142,7 +153,7 @@ UI 상호작용·통합·환경 의존 동작은 실행 검증이 필요합니�
 - 기록 대상 작업은 Workspace의 `Reports/YYYY/MM/Ticket-ID-작업명.md`에 YAML metadata와 기존 본문을 함께 저장하고 `INDEX.md`에 날짜·Ticket·제목·전체 상태·업무 상태·Size·MD·Report 링크를 남깁니다. MD는 `final_md`를 우선하고 없으면 `estimated_md`를 표시합니다. 순번 티켓은 예약한 Report를 갱신합니다. 중요한 결정만 `Decisions/DECISIONS.md`에 날짜·Ticket·이유·Report 링크를 남깁니다. 과거 값은 추정하거나 소급 변경하지 않습니다.
 - Report 저장 → INDEX·필요한 Decision 갱신 → metadata 집계 → `Dashboard/Current` 최신화 → 해당 일·주·월 Archive 갱신 순서로 진행합니다. 생성은 `python scripts/generate_dashboard.py --workspace <Workspace> --timezone <report_timezone>`를 사용하고 다른 날짜의 스냅샷은 `--date YYYY-MM-DD`를 지정합니다. 같은 기간의 파일은 하나만 유지합니다. Markdown Report가 원본이고 data.json과 HTML은 파생 결과물입니다. Dashboard 생성 실패도 설정된 기록 완료의 남은 작업으로 보고합니다. 구조·Size·MD·metadata·집계 상세는 [Workspace 규칙](references/workspace.md)을 따릅니다.
 
-- 실행 흐름은 대표 요청 → 기록 대상이면 업무 티켓 생성 → Main 분석 → 필요한 담당자와 모델 선택 → 업무 배정 → 담당자 작업 → 리뷰·검증 → Main 결과 통합·최종 확인 → 업무 보고 → 설정된 기록 저장 → 완료입니다.
+- 실행 흐름은 대표 요청 → 기록 대상이면 업무 티켓 생성 → Main의 Planner Gate 확인·필요 시 Planner 요구사항 정의 → Main 분석 → 필요한 담당자와 모델 선택 → 업무 배정 → 담당자 작업 → 리뷰·검증 → Main 결과 통합·최종 확인 → 업무 보고 → 설정된 기록 저장 → 완료입니다.
 - `work_status`는 업무 수행 상태입니다. 업무 COMPLETED는 필요한 구현·리뷰·검증·미해결 사항 확인·Main 통합·최종 응답 준비, Core 변경 시 commit·push까지 끝난 상태입니다. 업무에 남은 일이 있으면 PARTIAL, 진행을 막는 조건이 있으면 BLOCKED입니다.
 - 최종 응답과 Report 본문은 업무 / 기록 / 전체 상태 / 남은 조치를 구분합니다. Workspace 미설정이면 기록은 `해당 없음`입니다. 업무 완료여도 기록이 남으면 전체 PARTIAL, 기록 진행을 막는 조건이 있으면 전체 BLOCKED로 표시하며 업무 상태를 보존합니다.
 - 기록 실패 시 업무 상태를 보존하고 전체 PARTIAL은 `업무 완료 · 기록 미완료`, BLOCKED는 `업무 완료 · 기록 차단`으로 설명합니다(업무 COMPLETED일 때만). 확인된 실패 단계·이유는 선택 metadata `recording_issue`에 짧게 저장합니다. 같은 티켓으로 실패 단계부터 재개하며 업무 결과가 바뀌지 않았다면 구현·리뷰·검증을 반복하지 않습니다. 상세 저장·복구 절차는 [Workspace 규칙](references/workspace.md#업무와-기록-완료)을 따릅니다.

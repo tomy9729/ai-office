@@ -4,10 +4,13 @@
 
 | 업무 | 후보 Concept | 기본 흐름 |
 |---|---|---|
+| Requirements | 중요한 모호함이 있으면 Planner 1, 조사 필요 시 Explorer/Specialist 0~N | Main Gate → 질문·조사 → 요약·명세 → Main 배정 |
 | Feature | Explorer 0~N, Implementer 1~N, Reviewer/QA/Specialist 0~N | 조사 → 구현 → 필요한 독립 리뷰와 검증 |
 | Bugfix | Debugger 0~N, Explorer/Reviewer/QA 0~N, 변경이 있으면 Implementer 1~N | 재현·근본 원인 → 필요 시 수정 → 회귀 확인 |
 | Refactor | Explorer 0~N, Implementer 1~N, Reviewer/QA/Specialist 0~N | 참조·영향 확인 → 좁은 변경 → 동작 보존 확인 |
 | Investigation | Explorer 0~N, Debugger/Specialist 0~N | 질문별 독립 조사와 근거 수집 |
 | QA | QA 1~N, Reviewer/Specialist 0~N | 변경 기반 검증 → 실패 원인/범위 보고 |
+
+모든 조합에 앞서 [Planner Gate](../SKILL.md#planner-gate)를 확인한다. 명확한 요청은 Main의 PLANNER_PASS로 진행하며 Planner를 항상 추가하지 않는다. NEED_INFO에서는 의존 구현만 보류하고, Planner는 질문을 Main에 반환한 뒤 사용자 답변을 Main이 중계한다.
 
 같은 Concept 여러 명은 서로 다른 가설을 독립 조사할 수 있다. 동일 파일을 읽는 일은 병렬 가능하지만, 겹치는 파일을 쓰는 일은 순차화한다. 실제 tool 동시성 한도는 세션마다 확인한다.

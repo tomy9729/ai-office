@@ -141,6 +141,7 @@ M의 내용에 필요한 항목만 확장한다. 아래 아키텍처·병렬·�
 
 | task_name | 표시 제목 |
 |---|---|
+| `planner_define_dashboard_scope` | Planner · 대시보드 요구사항 정의 |
 | `explorer_trace_login_api` | Explorer · 로그인 API 호출 흐름 조사 |
 | `explorer_luna6_trace_login_api` | Explorer · 6 Luna · 로그인 API 호출 흐름 조사 |
 | `implementer_luna6_fix_ap_tree` | Implementer · 6 Luna · AP 트리 수정 |
@@ -149,6 +150,10 @@ M의 내용에 필요한 항목만 확장한다. 아래 아키텍처·병렬·�
 | `explorer_sol61_trace_agent_names` | Explorer · 6.1 Sol · Codex Agent 목록 이름 흐름 조사 (여러 runtime/UI 흐름의 복합 확인 필요) |
 
 명시 요청이 없고 독립적으로 확인된 모델도 없으면 표시 제목은 `Role · Task`, 생성 인자는 `role_action_target`을 사용하고 requested_model 항목은 생략한다. 이 규칙은 할당과 결과 양식에도 적용한다. 작성·runtime 적용과 정확한 UI 표시의 제한은 [SKILL.md](../SKILL.md)의 담당자 표시 제목을 따른다.
+
+## Planner 요구사항 전달
+
+Planner의 READY 요약·실행 명세와 NEED_INFO/PLANNER_PASS의 필수 내용은 [Planner 운영](planner.md#main-전달)을 사용한다. 사용자 확정 사항과 Planner의 작은 결정을 분리하고 Main이 질문을 중계한다. 이는 아래 공통 Agent 결과 보고 안의 수행 결과로 전달하며 별도 채팅 보고 양식이나 업무 metadata 상태를 만들지 않는다.
 
 ## Agent 할당
 
