@@ -153,7 +153,7 @@ M의 내용에 필요한 항목만 확장한다. 아래 아키텍처·병렬·�
 
 ## Planner 요구사항 전달
 
-Planner의 READY 요약·실행 명세와 NEED_INFO/PLANNER_PASS의 필수 내용은 [Planner 운영](planner.md#main-전달)을 사용한다. 사용자 확정 사항과 Planner의 작은 결정을 분리하고 Main이 질문을 중계한다. 이는 아래 공통 Agent 결과 보고 안의 수행 결과로 전달하며 별도 채팅 보고 양식이나 업무 metadata 상태를 만들지 않는다.
+Main이 자체 수행하면 READY 요약 후 내부 실행 기준을 정리하며 아래 child 인계 형식을 매번 사용자에게 출력하지 않는다. 복잡한 요구사항 분석을 별도 Planner에 위임한 경우 READY 요약·실행 명세와 NEED_INFO/PLANNER_PASS의 필수 내용은 [Planner 운영](planner.md#main-전달)을 사용한다. 사용자 확정 사항과 Planner의 작은 결정을 분리하고 Main이 질문을 중계한다. 이는 아래 공통 Agent 결과 보고 안의 수행 결과로 전달하며 별도 채팅 보고 양식이나 업무 metadata 상태를 만들지 않는다.
 
 ## Agent 할당
 

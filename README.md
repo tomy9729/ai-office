@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.7.0**
+Version: **0.7.1**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -9,11 +9,11 @@ AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 �
 
 Role/Concept은 직무, Model은 모델과 수행 역량이며 독립적으로 선택합니다. Team은 원팀, Skill/Plugin은 업무 도구와 전문 업무 지식, AGENTS.md는 프로젝트 규칙입니다. Plan은 작업 계획, Delegation은 업무 배정, Review는 리뷰, QA는 검증, Report는 업무 보고, Decision log는 의사결정 기록, Core는 운영 규칙입니다.
 
-Main은 요구 분석, 코드 읽기, 계획, 영향 판단, 역할·모델 선택, 통합과 최종 확인을 맡습니다. 코드 수정과 test/lint/typecheck/build/commit 실행은 Sub Agent에 맡깁니다. 작은 일은 필요한 한 명만 쓰며 독립 작업에 병렬 이득이 있을 때만 여러 명을 씁니다.
+Main은 항상 Planner 관점의 요구사항 정의·직접 질문과 요구 분석, 코드 읽기, 계획, 영향 판단, 역할·모델 선택, 통합과 최종 확인을 맡습니다. 코드 수정과 test/lint/typecheck/build/commit 실행은 Sub Agent에 맡깁니다. 작은 일은 필요한 한 명만 쓰며 독립 작업에 병렬 이득이 있을 때만 여러 명을 씁니다.
 
 | Role / 직무 | 책임 |
 |---|---|
-| Planner / 요구사항 정의 담당 | 중요한 미확정 요구 확인·쉬운 질문·실행 명세 전달 |
+| Planner / 요구사항 정의 담당 | Main이 위임한 복잡한 요구사항 분석·질문안·실행 명세 전달 |
 | Explorer / 조사 담당 | 진입점·호출 흐름·기존 패턴·영향 범위 조사 |
 | Debugger / 문제 분석 담당 | 재현·원인 가설 검증·근본 원인 조사 |
 | Implementer / 개발 담당 | Main이 정한 범위의 최소 구현과 검증 |
@@ -27,7 +27,7 @@ Main은 요구 분석, 코드 읽기, 계획, 영향 판단, 역할·모델 선�
 
 ## Workflow와 Execution Plan
 
-요청 → Main의 Planner Gate 확인 → 필요 시 Planner 요구사항 정의 → Main 담당자 배정 → 수행·리뷰·검증 → Main 통합 → 보고·기록 순서로 진행합니다. 명확한 요청은 Main이 PLANNER_PASS로 즉시 통과시키고, 중요한 모호함만 Planner가 확인합니다. NEED_INFO는 의존 구현만 보류하며 독립 조사·작업은 계속합니다. READY 요약·명세, Main 질문 중계와 재질문 예시는 [Planner 운영](references/planner.md), 필수 경계는 [Planner Gate](SKILL.md#planner-gate)를 따릅니다. Planner 상태는 기존 업무·전체 metadata와 분리합니다. 업무량과 위험을 독립적으로 판단하고 작은 변경은 Implementer 한 명으로 처리합니다. 최소 절차·독립 리뷰·QA 선택 기준은 [SKILL.md](SKILL.md#최소-절차와-검증-선택), 팀 예시는 [teams.md](references/teams.md)를 참고합니다.
+요청 → Main의 상시 요구사항 정의·질문 → 필요 시 복잡한 분석만 Planner 위임 → Main 담당자 배정 → 수행·리뷰·검증 → Main 통합 → 보고·기록 순서로 진행합니다. 명확한 요청은 Main이 PLANNER_PASS로 즉시 통과시키고, 중요한 모호함은 Main이 직접 확인합니다. 별도 Planner는 복잡한 요구사항 분석을 분리할 때 선택합니다. NEED_INFO는 의존 구현만 보류하며 독립 조사·작업은 계속합니다. Main은 READY 요약 후 내부 실행 기준을 정리하며 child 인계 양식을 매번 사용자에게 출력하지 않습니다. 위임한 Planner의 READY 요약·명세, Main 질문 중계와 재질문 예시는 [Planner 운영](references/planner.md), 필수 경계는 [Planner Gate](SKILL.md#planner-gate)를 따릅니다. Planner 상태는 기존 업무·전체 metadata와 분리합니다. 업무량과 위험을 독립적으로 판단하고 작은 변경은 Implementer 한 명으로 처리합니다. 최소 절차·독립 리뷰·QA 선택 기준은 [SKILL.md](SKILL.md#최소-절차와-검증-선택), 팀 예시는 [teams.md](references/teams.md)를 참고합니다.
 
 Plan Mode 최종 계획은 `<proposed_plan>` 안의 `AI OFFICE · WORK ORDER`로 작성합니다. 크기에 맞는 양식은 [templates.md](references/templates.md#plan-mode-업무-계획서), 실행 경계와 선택 규칙은 [SKILL.md](SKILL.md#plan-mode-업무-계획서)가 원본입니다.
 
@@ -61,6 +61,8 @@ python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone A
 ```
 
 Report·INDEX·필요한 Decision 저장 뒤 실행합니다. `--date`는 스냅샷 기간의 기준일이고 기본값은 지정 timezone의 현재 날짜입니다. 해당 일·주·월 파일 하나씩을 갱신합니다. DB·서버·watcher·실시간 Agent 상태 수집은 추가하지 않습니다. 상세 규칙과 제한은 [Workspace 규칙](references/workspace.md), metadata 예시는 [템플릿](references/templates.md)을 따릅니다.
+
+0.7.1은 Main이 항상 요구사항 정의와 직접 질문을 담당하고 복잡한 분석만 별도 Planner에 위임하도록 명확히 한 PATCH 변경입니다.
 
 0.7.0은 Planner 역할, 구현 전 요구사항 Gate와 실행 중 재질문·명세 전달을 추가한 MINOR 변경입니다. Main의 최종 책임·역할과 모델의 독립 선택·기존 업무 및 전체 상태·Plan Mode 실행 경계를 유지합니다.
 
