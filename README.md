@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.7.1**
+Version: **0.7.2**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -23,7 +23,7 @@ Main은 항상 Planner 관점의 요구사항 정의·직접 질문과 요구 �
 
 역할 정의는 [roles/](roles)에 있습니다. 현재 runtime이 제공하는 agent_type을 선택하거나, 필요한 office-* 값이 없으면 지원되는 일반 agent(예: default)에 원본 역할의 developer_instructions와 task 조건을 전달합니다. office-planner가 현재 세션에 없으면 이 fallback을 쓰며 설치 후 즉시 도구에 나타난다고 가정하지 않습니다. 없는 API를 만들지 않으며 위임이 불가능한 경우 제한을 보고합니다. child는 배정된 결과를 보고한 뒤 task를 끝내고 Office를 다시 구성하지 않습니다. 후속 task도 모델을 다시 선택하고, 모델·역할·담당 범위가 맞으며 리뷰 독립성을 유지하는 agent만 재사용합니다. 모델은 기존 배정의 requested_model 또는 독립 확인값으로 비교하고, 둘 다 없으면 추정하지 않습니다. 종료 기능은 runtime이 제공하는 범위에서만 사용합니다.
 
-담당자 표시·생성·모델 선택은 [SKILL.md](SKILL.md#담당자-표시-제목)를 따릅니다. 예: `Implementer · 6 Luna · AP 트리 수정`. 요청·확인 모델 정보가 모두 없으면 `Role · Task`와 `role_action_target`을 사용합니다. 생성 예시는 [templates.md](references/templates.md)에 있습니다.
+담당자 표시·생성·모델 선택은 [SKILL.md](SKILL.md#담당자-표시-제목), 특히 기본 Luna 배정과 Sol 구현 예외는 [모델 선택과 재작업](SKILL.md#모델-선택과-재작업)을 따릅니다. 예: `Implementer · 6 Luna · AP 트리 수정`. 요청·확인 모델 정보가 모두 없으면 `Role · Task`와 `role_action_target`을 사용합니다. 생성 예시는 [templates.md](references/templates.md)에 있습니다.
 
 ## Workflow와 Execution Plan
 
@@ -61,6 +61,8 @@ python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone A
 ```
 
 Report·INDEX·필요한 Decision 저장 뒤 실행합니다. `--date`는 스냅샷 기간의 기준일이고 기본값은 지정 timezone의 현재 날짜입니다. 해당 일·주·월 파일 하나씩을 갱신합니다. DB·서버·watcher·실시간 Agent 상태 수집은 추가하지 않습니다. 상세 규칙과 제한은 [Workspace 규칙](references/workspace.md), metadata 예시는 [템플릿](references/templates.md)을 따릅니다.
+
+0.7.2는 Luna가 수행 가능한 실행을 반드시 Luna에 배정하고, Sol 이상 구현 예외를 구체적인 미해결 판단으로 제한하며, 실질 설계·독립 판단 리뷰와 실행 확인의 모델 기준을 분리한 PATCH 변경입니다. 자세한 기준은 [모델 선택과 재작업](SKILL.md#모델-선택과-재작업)을 따릅니다.
 
 0.7.1은 Main이 항상 요구사항 정의와 직접 질문을 담당하고 복잡한 분석만 별도 Planner에 위임하도록 명확히 한 PATCH 변경입니다.
 
