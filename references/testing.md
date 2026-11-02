@@ -1,6 +1,6 @@
 # 테스트 역할 운영
 
-현재 등록된 역할은 Planner, Explorer, Debugger, Implementer, Reviewer, TestPlanner, TestExecutor, QA, Specialist다. Questioner 역할은 없고 Main이 요구 정의와 사용자 질문을 맡는다. Main은 수용 기준·범위를 전달할 수 있지만 세부 테스트 owner가 아니다. Main과 기존 역할의 도구는 현재 runtime 및 프로젝트 규칙을 따르고, 모델은 SKILL.md의 task별 공통 선택 규칙을 따른다. 별도 모델 지정은 TestPlanner/TestExecutor만 적용한다.
+현재 등록된 역할은 Planner, Explorer, Debugger, Implementer, Reviewer, TestPlanner, TestExecutor, QA, Specialist다. Questioner 역할은 없고 Main이 요구 정의와 사용자 질문을 맡는다. Main은 수용 기준·범위를 전달할 수 있지만 세부 테스트 owner가 아니다. Main은 매 새 배정·후속 배정 전에 현재 runtime의 모델 목록과 계정 사용 가능성, 신뢰 가능한 역량·비용 정보, 명시 model·reasoning effort 생성 지원을 확인합니다. 선택한 실제 ID와 해당 모델 지원 effort를 spawn 인자에 지정해 부모 상속을 막습니다. effort 생략은 명시 모델 선택 시 모델 자체 기본값이 적용되고 부모 effort를 상속하지 않는다는 runtime 근거가 확인될 때만 가능합니다. 정보나 명시 생성 기능을 확인할 수 없으면 TestExecutor 생성 전에 BLOCKED입니다. generic fallback에도 같은 gate가 적용됩니다. 이 절차는 직접 custom-agent 선택 등 다른 호출자의 우회를 플랫폼이 차단한다고 보장하지 않습니다.
 
 ## 입출력·handoff·책임
 
@@ -12,8 +12,8 @@
 | Debugger | 실패 관측·증거 | 재현 protocol, 실패 결과 분석·근본 원인·수정 방향 | 수정은 Implementer, 정식 계획 실행은 TestExecutor | 원인 분석 owner; 실제 재현 실행은 TestExecutor |
 | Implementer | Main의 구현 범위·제약 | 제품·테스트 코드 변경 | 변경·자체 확인 보고 | 코드 수정 owner; 테스트 계획·정식 실행 owner 아님 |
 | Reviewer | diff·요구사항 | 정적 독립 리뷰와 필수 formatter/lint evidence 누락 확인 | 발견 또는 범위·제한 보고 | 실행·품질 판정 없음 |
-| TestPlanner | 요구·diff·수용 기준 | 테스트 계획 JSON과 우선순위·조건·기대값 | 요구 모호하면 Main/Planner; 완료 시 Executor | 실행·코드 수정 금지. gpt-6.1-sol / medium. 중간 수준 동등 모델 허용 |
-| TestExecutor | 고정 계획·최소 맥락 | 계획대로 실행한 case별 actual/evidence/status | FAIL→Debugger, NEEDS_REVIEW→TestPlanner 또는 QA, 결과→Main | gpt-6-luna / low 고정, 승격/fallback/분석/수정/품질판정 금지 |
+| TestPlanner | 요구·diff·수용 기준 | 테스트 계획 JSON과 우선순위·조건·기대값 | 요구 모호하면 Main/Planner; 완료 시 Executor | 실행·코드 수정 금지. Main이 현재 지원·사용 가능 후보 중 중간 이상 분석 역량을 충족하는 최소비용 모델을 선택하고 실제 ID와 지원 effort를 명시 |
+| TestExecutor | 고정 계획·최소 맥락 | 계획대로 실행한 case별 actual/evidence/status | FAIL→Debugger, NEEDS_REVIEW→TestPlanner 또는 QA, 결과→Main | Main은 계획 실행 가능성이 확인된 현재 저비용 후보 중 최소 역량·최저비용 모델의 ID와 지원 effort를 명시; 정보 확인 불가 시 사전 BLOCKED. 실행 중 역량 초과는 NEEDS_REVIEW; 승격/fallback/분석/수정/품질판정 금지 |
 | QA | 계획·evidence·수용 기준 | 증거 해석과 최종 품질 판단 | 근거·제한을 Main에 반환 | 중복 계획·실행 금지 |
 | Specialist | Main의 제한된 전문 질문 | 전문 분석·권고 | Main에 반환 | 구현·테스트 설계/실행 없음 |
 
@@ -56,7 +56,7 @@ PASS는 `TP-001 PASS` 한 줄. FAIL은 Expected/Actual/Evidence, BLOCKED는 Reas
 
 Codex 앱 in-app browser(CUA IAB, `codex_in_app`)만 사용한다. Chrome/Edge/Firefox/external 또는 headless Chromium 실행, 이를 시작하는 Playwright/Puppeteer 명령, 시스템 브라우저 설정 변경은 금지한다. in-app browser로 수행할 수 없으면 반드시 `<id> BLOCKED: Codex in-app browser cannot execute this test.` 한 줄을 그대로 쓰고 번역·요약하거나 일반 Reason 형식으로 바꾸지 않는다.
 
-공식 custom-agent TOML은 name/description/developer_instructions와 model/model_reasoning_effort를 지원한다. `features.shell_tool`, `features.apps`, `features.plugins`, `features.memories`, `features.request_permissions_tool`을 false로 설정할 수 있지만 `sandbox_mode`, `approval_policy`, `mcp_servers`, 임의 `allowedBrowsers`/tool deny allowlist로 역할 권한을 격리할 수 있다고 주장하지 않는다. 코드 수정 금지는 지침이지 OS 권한 제거가 아니다. 실행 제한 보장이 불가능하면 BLOCKED다. 기본 agent fallback은 `fork_turns=none`, 최소 맥락과 원본 역할 지침을 포함하고 모델·실행 제한을 강제할 수 없으면 시작하지 않는다. 새 agent_type 발견은 다음 세션에 확인한다. gpt-6-luna를 저비용 지원군으로 사용하지만 정확 요금 비교/최저가 검증은 하지 않았다. 모델 미지원은 BLOCKED, 판단 자료 부족은 NEEDS_REVIEW다.
+공식 custom-agent TOML은 name/description/developer_instructions와 model/model_reasoning_effort를 지원한다. `features.shell_tool`, `features.apps`, `features.plugins`, `features.memories`, `features.request_permissions_tool`을 false로 설정할 수 있지만 `sandbox_mode`, `approval_policy`, `mcp_servers`, 임의 `allowedBrowsers`/tool deny allowlist로 역할 권한을 격리할 수 있다고 주장하지 않는다. 코드 수정 금지는 지침이지 OS 권한 제거가 아니다. 실행 제한 보장이 불가능하면 BLOCKED다. 기본 agent fallback은 `fork_turns=none`, 최소 맥락과 원본 역할 지침을 포함하고 모델·실행 제한을 강제할 수 없으면 시작하지 않는다. 새 agent_type 발견은 다음 세션에 확인한다. TestExecutor는 현재 사용 가능 후보 중 계획 실행을 충족하는 최소 역량·최저비용 모델만 사용합니다. 모델 ID·effort 명시를 포함한 생성 전 조건이나 비용·역량 정보를 확인할 수 없으면 BLOCKED이며, 실행 중 증거 부족·역량 초과는 승격하지 않고 NEEDS_REVIEW입니다. 어떤 특정 모델의 최저 비용도 확인했다고 주장하지 않습니다.
 
 ## Owner 매트릭스
 

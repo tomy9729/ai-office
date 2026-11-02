@@ -129,32 +129,28 @@ M의 내용에 필요한 항목만 확장한다. 아키텍처·병렬·독립 �
 
 ## 담당자 목록 이름과 생성 인자 예시
 
-기본 모델은 지원되는 Luna다. 구현 예외, 실질 설계 판단, 독립 판단 리뷰, Astra 선택과 후속 재배정 기준은 [SKILL.md 모델 규칙](../SKILL.md#모델-선택과-재작업)을 따른다. Main이 설계·작업 분할로 판단을 해소하면 실행은 Luna에 배정한다. 제목은 `[Role] · [Model Full Name] · [Task]`이며 명시적으로 요청한 모델 이름과 버전을 표시 기준으로 사용한다. 기존 agent는 선택 모델과 역할·범위가 맞고 필요한 리뷰 독립성을 유지할 때만 재사용한다. 모델 비교는 기존 배정의 requested_model 또는 독립 확인한 실제 모델을 근거로 하며, 둘 다 없으면 추정하지 않는다. requested_model은 배정 비교 근거일 뿐 실제 실행 모델 확인값이나 models metadata가 아니다. 선택 모델을 쓸 수 없으면 적합한 지원 대안과 이유를 밝힌다. 지원하는 도구에서는 생성 인자에 모델을 명시 요청한다. 요청이 없고 확인된 모델도 없으면 모델을 생략한 `Role · Task`와 `role_action_target`을 사용한다. 요청값은 requested_model에 기록하며 부모 상속이나 실제 모델 확인값으로 간주하지 않는다.
+기본 선택은 현재 runtime에서 사용 가능하고 task에 충분한 최소 비용 모델입니다. 해결되지 않은 실질 판단에는 필요한 추론 역량을 확인하고, 독립 판단 Reviewer는 중간 이상 역량 후보를 고릅니다. TestPlanner/TestExecutor의 세부 조건과 생성 전 확인은 [SKILL.md 모델 규칙](../SKILL.md#모델-선택과-재작업)을 따릅니다. Main은 현재 지원·계정 사용 가능성, 신뢰 가능한 역량·비용 정보, 명시 model ID와 reasoning effort spawn 지원을 확인한 뒤 실제 ID와 지원 effort를 지정합니다. 정보가 부족하면 TestExecutor를 생성하기 전에 BLOCKED입니다. runtime이 선택 ID·effort 지정을 지원하지 않거나 부모 상속을 막을 수 없으면 TestExecutor 생성은 BLOCKED이며 generic fallback에도 같은 gate를 적용합니다. 이 운영 절차는 다른 호출자의 직접 custom-agent 선택을 플랫폼이 강제로 막는다고 보장하지 않습니다.
 
-- `Implementer · 6 Luna · AI Office Core 보고 규칙 수정`
-- `Reviewer · 6.1 Sol · Core 변경 정확성·회귀·설계 판단 리뷰` (판단 리뷰)
-- `QA · 6 Luna · 설치·업데이트 절차 동작 검증`
-- `Explorer · 6 Luna · 로그인 API 호출 흐름 조사` (requested_model: gpt-6-luna)
-- `Implementer · 6 Luna · 로그인 API 수정` (조사와 수정 범위가 명확함)
-- `QA · 6 Luna · 로그인 API 동작 검증` (정해진 기대값 확인)
-- `Reviewer · 6.1 Sol · 로그인 API 변경 판단 리뷰` (정확성·회귀·설계 판단이 필요하여 Sol 선택)
+제목은 `[Role] · [Model Full Name] · [Task]`이며 실제로 명시 요청하거나 독립 확인한 모델 ID를 씁니다. 영구 예시에는 변동 가능한 모델명을 고정하지 않습니다. requested_model은 배정에 사용한 요청값이고, 독립 확인한 실제 실행 모델과 구분합니다. 기존 agent는 선택 모델과 역할·범위가 맞고 필요한 리뷰 독립성을 유지할 때만 재사용합니다. 모델 비교는 기존 requested_model 또는 독립 확인된 실제 ID를 근거로 하며 둘 다 없으면 추정하지 않습니다. 모델 요청이 없고 확인된 모델도 없으면 `Role · Task`와 `role_action_target`을 사용합니다. Task name에 모델을 넣는 경우 실제 선택 ID를 ASCII 소문자·숫자·밑줄로 정규화하고, 이름 정보가 없으면 모델 부분을 생략합니다.
 
-범위가 정해진 원인 조사는 `Explorer · 6 Luna`가 기존 패턴과 정의된 가설을 따라 수행한다. 여러 파일을 고치는 알려진 원인 수정과 정해진 기대값 검증은 Luna에 맡긴다. 미해결 구현·설계 판단이나 독립 판단 리뷰에는 SKILL의 Sol 이상 조건을 적용한다. 모델이 같아도 QA와 Reviewer는 역할이 다르므로 구현 agent를 그대로 재사용하지 않는다.
+- `Implementer · [실제 모델 ID] · Core 보고 규칙 수정`
+- `Reviewer · [실제 모델 ID] · Core 변경 정확성·회귀·설계 판단 리뷰`
+- `QA · [실제 모델 ID] · 설치·업데이트 절차 동작 검증`
+- `Explorer · [실제 모델 ID] · 로그인 API 호출 흐름 조사`
 
-현재 collaboration.spawn_agent 호출의 task_name에 아래 이름을 실제로 전달한다. 할당 메시지에는 원래 제목을 병기하고 채팅 보고에서는 담당 직무·업무 항목에 넣는다. 모델 약칭은 family+점 없는 버전이며 task는 action+target으로 짧게 쓴다. 생성 전에 실제 Role, 모델 약칭과 명시 요청값의 일치(요청이 없으면 독립적으로 확인된 모델과 비교하며 둘 다 없으면 모델 검사 생략), action_target의 수행 내용과 대상을 확인한다. fork_turns는 기본 none으로 두고 필요한 맥락은 메시지에 담는다. 이전 이력이 필요할 때만 필요한 양의 이력을 지정하고 all은 쓰지 않는다. 생성 직후 list_agents의 agent_name 경로가 전달한 task_name을 포함하는지 확인한다.
+역할 책임은 모델과 독립적입니다. 범위가 정해진 원인 조사는 Explorer, 알려진 원인 수정은 Implementer, 정해진 기대값 실행은 TestExecutor, 실질 판단이 필요한 독립 리뷰는 Reviewer에 맡기며 구현 agent를 Reviewer로 재사용하지 않습니다.
+
+현재 collaboration.spawn_agent 호출의 task_name은 `role_model_action_target` 형식으로 둘 수 있습니다. 실제 모델 ID가 확인된 경우에만 그 값을 정규화해 모델 부분으로 쓰고, 그렇지 않으면 `role_action_target`을 사용합니다. action_target은 수행 내용과 대상이 드러나는 짧고 구체적인 영문 snake_case입니다. 할당 메시지에는 원래 제목을 병기합니다. 생성 직후 agent 경로의 task_name을 확인합니다.
 
 | task_name | 표시 제목 |
 |---|---|
 | `planner_define_dashboard_scope` | Planner · 대시보드 요구사항 정의 |
 | `explorer_trace_login_api` | Explorer · 로그인 API 호출 흐름 조사 |
-| `explorer_luna6_trace_login_api` | Explorer · 6 Luna · 로그인 API 호출 흐름 조사 |
-| `implementer_luna6_fix_ap_tree` | Implementer · 6 Luna · AP 트리 수정 |
-| `reviewer_sol61_review_chart_diff` | Reviewer · 6.1 Sol · 차트 diff 판단 리뷰 |
-| `qa_luna6_check_tree_selection` | QA · 6 Luna · 트리 선택 동작 검증 |
-| `explorer_sol61_trace_agent_names` | Explorer · 6.1 Sol · Codex Agent 목록 이름 흐름 조사 (여러 runtime/UI 흐름의 복합 확인 필요) |
+| `implementer_[model]_fix_ap_tree` | Implementer · [실제 모델 ID] · AP 트리 수정 |
+| `reviewer_[model]_review_chart_diff` | Reviewer · [실제 모델 ID] · 차트 diff 판단 리뷰 |
+| `qa_[model]_check_tree_selection` | QA · [실제 모델 ID] · 트리 선택 동작 검증 |
 
-명시 요청이 없고 독립적으로 확인된 모델도 없으면 표시 제목은 `Role · Task`, 생성 인자는 `role_action_target`을 사용하고 requested_model 항목은 생략한다. 이 규칙은 할당과 결과 양식에도 적용한다. 작성·runtime 적용과 정확한 UI 표시의 제한은 [SKILL.md](../SKILL.md)의 담당자 표시 제목을 따른다.
-
+명시 요청이 없고 독립 확인 모델도 없으면 모델 부분을 생략하고 requested_model 항목도 생략합니다. 작성·runtime 적용과 정확한 UI 표시의 제한은 [SKILL.md](../SKILL.md)의 담당자 표시 제목을 따릅니다.
 ## Planner 요구사항 전달
 
 Main이 자체 수행하면 READY 요약 후 내부 실행 기준을 정리하며 아래 child 인계 형식을 매번 사용자에게 출력하지 않는다. 복잡한 요구사항 분석을 별도 Planner에 위임한 경우 READY 요약·실행 명세와 NEED_INFO/PLANNER_PASS의 필수 내용은 [Planner 운영](planner.md#main-전달)을 사용한다. 사용자 확정 사항과 Planner의 작은 결정을 분리하고 Main이 질문을 중계한다. 이는 아래 공통 Agent 결과 보고 안의 수행 결과로 전달하며 별도 채팅 보고 양식이나 업무 metadata 상태를 만들지 않는다.
@@ -210,8 +206,8 @@ Ticket: [발급한 Ticket ID]
 
 | Agent identifier / 표시 제목 | Role | Task | Model (requested_model) | Complexity | Result |
 |---|---|---|---|---|---|
-| explorer_luna6_trace_login_api / Explorer · 6 Luna · 로그인 API 호출 흐름 조사 | Explorer | 조사 범위 | requested_model: gpt-6-luna | 선택 | 완료 및 근거 |
-| implementer_luna6_update_report_rules / Implementer · 6 Luna · AI Office Core 보고 규칙 수정 | Implementer | 수정 범위 | requested_model: gpt-6-luna | 선택 | 변경 및 검증 |
+| explorer_[model]_trace_login_api / Explorer · [실제 모델 ID] · 로그인 API 호출 흐름 조사 | Explorer | 조사 범위 | requested_model: [실제 요청 ID] | 선택 | 완료 및 근거 |
+| implementer_[model]_update_report_rules / Implementer · [실제 모델 ID] · AI Office Core 보고 규칙 수정 | Implementer | 수정 범위 | requested_model: [실제 요청 ID] | 선택 | 변경 및 검증 |
 
 Max Parallel: [관측된 최대 동시 Agent 수; Main 제외]
 
@@ -319,11 +315,11 @@ Model 열에는 명시 요청한 requested_model만 적으며 요청이 없으�
 
 | 식별·모델 항목 | 전달값 또는 실제 확인값 |
 |---|---|
-| task_name | implementer_luna6_update_report_rules |
-| agent_name | /root/implementer_luna6_update_report_rules |
+| task_name | implementer_[model]_update_report_rules |
+| agent_name | /root/implementer_[model]_update_report_rules |
 | 이름 적용 확인 | 관측 경로가 전달한 task_name을 포함하여 일치합니다. 정확한 앱 UI 표시는 미확인입니다. |
-| 표시 제목 | Implementer · 6 Luna · 보고 양식 문서 수정 |
-| requested_model | gpt-6-luna |
+| 표시 제목 | Implementer · [실제 모델 ID] · 보고 양식 문서 수정 |
+| requested_model | [실제 요청 ID] |
 
 **수행 결과:** SKILL.md와 references/templates.md의 채팅 보고 항목을 수정했습니다.
 
