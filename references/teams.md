@@ -9,7 +9,8 @@
 | Bugfix | Debugger 0~N, Explorer/Reviewer/QA 0~N, 변경이 있으면 Implementer 1~N | 재현·근본 원인 → 필요 시 수정 → 회귀 확인 |
 | Refactor | Explorer 0~N, Implementer 1~N, Reviewer/QA/Specialist 0~N | 참조·영향 확인 → 좁은 변경 → 동작 보존 확인 |
 | Investigation | Explorer 0~N, Debugger/Specialist 0~N | 질문별 독립 조사와 근거 수집 |
-| QA | QA 1~N, Reviewer/Specialist 0~N | 변경 기반 검증 → 실패 원인/범위 보고 |
+| Test | Implementer 1~N, Reviewer 0~N, TestPlanner/TestExecutor/QA는 위험에 따라 선택 | 구현 → 정적 리뷰 → 계획 설계 → 계획 실행 → 품질 판단 |
+| QA | 필요한 TestPlanner/TestExecutor/QA만 선택, 실패 분석은 Debugger | 계획 검증 → evidence 기반 품질 판단 → FAIL은 Debugger |
 
 모든 조합에 앞서 [Planner Gate](../SKILL.md#planner-gate)를 확인한다. 명확한 요청은 Main의 PLANNER_PASS로 진행하며 Planner를 항상 추가하지 않는다. Main이 중요한 미결정을 직접 질문한다. NEED_INFO에서는 의존 구현만 보류하고, 별도 Planner를 사용한 경우에만 질문을 Main에 반환한 뒤 사용자 답변을 Main이 중계한다.
 

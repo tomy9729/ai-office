@@ -22,7 +22,9 @@ AI Office는 회사·프로젝트에 종속되지 않는 Agent 운영, 역할·�
 | Debugger | Debugger · 문제 분석 담당 |
 | Implementer | Implementer · 개발 담당 |
 | Reviewer | Reviewer · 리뷰 담당 |
-| QA | QA · 검증 담당 |
+| TestPlanner | TestPlanner · 테스트 설계 담당 |
+| TestExecutor | TestExecutor · 테스트 실행 담당 |
+| QA | QA · 최종 품질 판단 담당 |
 | Specialist | Specialist · 전문 담당 |
 
 - 결과·결론을 먼저 전달하고 항목명은 굵게 쓰며 자연스러운 문장으로 결과와 이유를 설명합니다. 줄 수나 길이를 제한하지 않으며 필요한 근거·검증·제한을 충분히 전달합니다. 비교·배정은 표를 사용하고 장식용 이모지, 불필요한 인사·완곡 표현과 반복은 넣지 않습니다.
@@ -40,9 +42,9 @@ User는 대표, Main은 요구사항 정의와 업무 조율자, Sub Agent는 �
 
 용어의 회사식 표현은 [README](README.md)를 참고합니다.
 
-- Main은 항상 Planner 관점의 요구사항 정의·질문과 요구 분석, 조사·계획, 코드 읽기, 영향 판단, Concept/모델 선택, 결과 통합·리뷰·최종 검증을 책임집니다. 코드 쓰기와 test/lint/typecheck/build/commit 실행은 담당 Sub Agent에 위임합니다. Sub Agent는 배정된 작업을 수행하며 기본적으로 새 하위 agent를 만들지 않습니다.
+- Main은 항상 Planner 관점의 요구사항 정의·질문과 요구 분석, 조사·계획, 코드 읽기, 영향 판단, Concept/모델 선택, 결과 통합과 업무 완료 기준 확인을 책임집니다. evidence 기반 최종 품질 판단은 QA, 정적 독립 diff 리뷰는 Reviewer가 담당합니다. 코드 쓰기와 test/lint/typecheck/build/commit 실행은 담당 Sub Agent에 위임합니다. Sub Agent는 배정된 작업을 수행하며 기본적으로 새 하위 agent를 만들지 않습니다.
 - Role/Concept과 Model은 독립적으로 선택합니다. 모델을 직무에 고정하지 말고 task의 난이도, 위험, 맥락 의존성에 맞춥니다. 일반 업무는 요구를 충족하는 충분한 모델을 우선하고 높은 정확도나 추론이 꼭 필요할 때만 그에 맞는 수행 역량의 모델을 씁니다.
-- 필요한 Concept 파일만 읽습니다: [Planner 요구사항 정의 담당](roles/office-planner.toml), [Explorer 조사 담당](roles/office-explorer.toml), [Debugger 문제 분석 담당](roles/office-debugger.toml), [Implementer 개발 담당](roles/office-implementer.toml), [Reviewer 리뷰 담당](roles/office-reviewer.toml), [QA 검증 담당](roles/office-qa.toml), [Specialist 전문 담당](roles/office-specialist.toml). 같은 직무를 여러 명 쓸 때 각자 고유 이름과 비겹치는 범위를 정합니다.
+- 필요한 Concept 파일만 읽습니다: [Planner 요구사항 정의 담당](roles/office-planner.toml), [Explorer 조사 담당](roles/office-explorer.toml), [Debugger 문제 분석 담당](roles/office-debugger.toml), [Implementer 개발 담당](roles/office-implementer.toml), [Reviewer 리뷰 담당](roles/office-reviewer.toml), [TestPlanner 테스트 설계 담당](roles/office-test-planner.toml), [TestExecutor 테스트 실행 담당](roles/office-test-executor.toml), [QA 최종 품질 판단 담당](roles/office-qa.toml), [Specialist 전문 담당](roles/office-specialist.toml). 같은 직무를 여러 명 쓸 때 각자 고유 이름과 비겹치는 범위를 정합니다.
 - TOML은 역할 지침이며 agent를 자동 생성하거나 권한을 바꾸지 않습니다. 실행 도구의 권한 경계는 별도로 지킵니다.
 
 ## Planner Gate
@@ -80,6 +82,14 @@ User는 대표, Main은 요구사항 정의와 업무 조율자, Sub Agent는 �
 
 Team은 원팀이며, 담당자 구성은 고정 절차가 아닌 [조합 예시](references/teams.md)를 참고합니다. Plan, Agent Report와 최종 보고는 [템플릿](references/templates.md)의 필요한 부분만 읽습니다.
 
+## 테스트 역할 분리
+
+Main은 요구 정의·사용자 질문·범위·수용 기준과 최종 통합을 맡고, 복잡한 요구 분석·명세는 필요할 때 Planner에 위임합니다. TestPlanner는 테스트 케이스 설계, TestExecutor는 전달된 계획 실행과 case 증거 기록의 owner입니다. Implementer는 제품·테스트 코드 작성과 수정, Reviewer는 정적 독립 리뷰와 필수 검증 결과 누락 확인, Debugger는 실패 원인 분석, QA는 증거 해석과 최종 품질 판단을 맡습니다. 세부 입출력·handoff·도구·모델·책임표는 [testing.md](references/testing.md)를 따릅니다.
+
+기본 순서는 Implementer → Reviewer → TestPlanner → TestExecutor → QA입니다. 작은 위험 기반 작업은 불필요한 역할 인스턴스를 생략하되 책임 owner를 합치지 않습니다. FAIL은 Debugger, NEEDS_REVIEW는 TestPlanner 또는 QA로 전달합니다. 모호 요구는 Main이 확인하고 필요 시 Planner에 위임합니다. 동일 실패와 동일 계획 버전 반복에서 새 정보가 없으면 중단해 Main에 돌려 무한 반복을 막습니다.
+
+TestPlanner는 `gpt-6.1-sol` / `medium`이며 동등한 중간 분석 모델을 허용합니다. TestExecutor는 `gpt-6-luna` / `low` 고정이며 고성능 모델 승격이나 부모 모델 fallback을 금지합니다. 이 역할 예외는 일반 모델 선택 규칙보다 우선합니다. runtime 미지원 모델은 BLOCKED입니다. 모델별 실제 실행과 정확한 가격 비교는 확인했다고 주장하지 않습니다. TOML은 권한 격리를 보장하지 않으며 역할별 sandbox·approval·임의 도구 allowlist가 있다고 가정하지 않습니다. TestExecutor는 Codex 앱 in-app browser(CUA IAB, `codex_in_app`)만 허용하고 Chrome/Edge/Firefox/headless Chromium 및 이를 실행하는 Playwright/Puppeteer 명령을 금지합니다. 실제 실행 제한을 보장할 수 없으면 실행 전 BLOCKED로 반환합니다. in-app browser로 실행할 수 없으면 `BLOCKED: Codex in-app browser cannot execute this test.`를 씁니다. fallback agent에는 `fork_turns=none`과 최소 맥락·원본 지침을 주고 제한 강제를 보장할 수 없으면 BLOCKED입니다. 신규 agent type은 다음 세션 등록 여부를 확인합니다. TestExecutor의 case별 지정 출력은 공통 보고 양식의 예외이며 case 상태는 업무·metadata 상태가 아닙니다.
+
 ## 최소 절차와 검증 선택
 
 Size는 업무량이며 위험과 독립적으로 판단합니다. 새 등급이나 단계를 만들지 않고 아래 기준으로 필요한 절차만 선택합니다.
@@ -91,7 +101,7 @@ Size는 업무량이며 위험과 독립적으로 판단합니다. 새 등급이
 | 일반 기능·버그 수정 | 영향 조사 → 구현 → 필요한 리뷰·실행 검증 |
 | 인증·권한·데이터 손실·공통 계약·동시성 변경 | 독립 Reviewer와 해당 위험에 대한 실행 검증 |
 
-UI 상호작용·통합·환경 의존 동작은 실행 검증이 필요합니다. Implementer의 검증으로 요구사항을 충분히 확인할 수 없으면 QA를 분리합니다. 각 검증에는 잡으려는 실패와 기대 결과를 명시하며 담당자 수 자체를 품질 지표로 삼지 않습니다.
+UI 상호작용·통합·환경 의존 동작은 실행 검증이 필요합니다. TestPlanner가 검증 케이스를 설계하고 TestExecutor가 계획을 실행하며 QA는 증거로 요구사항 충족과 전체 품질을 최종 판단합니다. 각 검증에는 잡으려는 실패와 기대 결과를 명시하고 역할 인스턴스는 위험에 따라 선택합니다.
 
 작업 중 생성한 테스트 파일은 테스트 완료 후 PR을 올리기 전에 반드시 삭제하고, Main은 최종 diff에 남아 있지 않은지 확인합니다. 기존 테스트 파일은 삭제 대상에 포함하지 않습니다.
 
@@ -123,7 +133,7 @@ Main이 먼저 범위·경로·인터페이스·불변조건·예외·검증을 
 - 업무 구조는 실제 분석·판단·배정·구현·검증에 필요한 내용을 정리하는 데 사용합니다. 업무명, 목적, Main 책임, Size(S/M/L), Estimated MD와 실제 위험을 적습니다. MD는 업무량 추정이며 일정·마감·실행 시간과 구분합니다. 우선순위는 작업 순서를 바꿀 때만 적고 현재 단계는 `계획 수립`으로 표시합니다. 새 생명주기나 상태 체계는 만들지 않습니다.
 - 명시적 요구사항과 코드·흐름 조사로 확인해야 하는 암묵적 요구사항을 분리합니다. Plan Mode에서는 읽기 전용으로 조사하며 구현 방향에 영향을 주는 미확정 사항을 최종 계획 전에 해소합니다. 구현 뒤 확인할 검증은 조사 사실과 구분하며 구현 결정을 담당자에게 떠넘기지 않습니다.
 - Plan Mode에서는 코드 수정, Agent 구현 작업 시작, commit·push를 하지 않습니다. 배정 표는 실행 예정이며 실제 생성·수행·검증 완료로 표시하지 않습니다. 실행으로 전환하면 계획의 역할·범위·산출물·검증 매핑대로 위임하고 실제 변경이 필요하면 이유와 변경 내용을 설명합니다.
-- Main은 분석·판단·통합과 최종 확인을 맡고 구현·test/lint/typecheck/build·commit은 Sub Agent에 위임합니다. 공식 직무는 Planner, Explorer, Debugger, Implementer, Reviewer, QA, Specialist만 사용합니다. Researcher는 Explorer, Developer는 Implementer를 설명하는 별칭일 뿐 새 Role이 아닙니다. 작은 작업에는 Implementer 한 명으로 충분하며 Reviewer와 QA를 별도 Agent로 의무 배정하지 않습니다.
+- Main은 분석·판단·통합과 최종 확인을 맡고 구현·test/lint/typecheck/build·commit은 Sub Agent에 위임합니다. 공식 직무는 Planner, Explorer, Debugger, Implementer, Reviewer, TestPlanner, TestExecutor, QA, Specialist입니다. Questioner 역할은 없으며 Main이 요구 정의·질문을 맡습니다. Researcher는 Explorer, Developer는 Implementer를 설명하는 별칭일 뿐 새 Role이 아닙니다. 문구·기계적 수정처럼 테스트 설계와 실행이 필요 없는 작은 작업은 Implementer 한 명만 배정할 수 있습니다. 테스트가 필요하면 책임을 합치지 않고 위험에 맞는 TestPlanner, TestExecutor와 QA를 선택하며 역할 instance를 모두 만들지는 않습니다.
 - S는 목적·Size/MD·요구사항·범위와 순서·담당자·검증과 완료 기준을 짧게 담습니다. M은 업무 개요·요구사항·완료한 조사와 남은 실행 검증·배정 표·순서와 범위·위험과 완료 기준을 담습니다. L은 M을 바탕으로 필요한 아키텍처·의존성·병렬 작업·통합·테스트·롤백·주요 결정만 추가합니다. 크기만으로 역할과 항목을 늘리지 않습니다.
 - 장식용 부서·새 식별자·회의·결재자·시간 기록·직급·대화/상태 로그는 추가하지 않습니다. [S/M/L 템플릿](references/templates.md#plan-mode-업무-계획서)에서 필요한 항목만 사용하고 파일 보고 metadata·저장 정책은 유지합니다.
 
@@ -159,7 +169,7 @@ Main이 먼저 범위·경로·인터페이스·불변조건·예외·검증을 
 - 기록 대상 작업은 Workspace의 `Reports/YYYY/MM/Ticket-ID-작업명.md`에 YAML metadata와 기존 본문을 함께 저장하고 `INDEX.md`에 날짜·Ticket·제목·전체 상태·업무 상태·Size·MD·Report 링크를 남깁니다. MD는 `final_md`를 우선하고 없으면 `estimated_md`를 표시합니다. 순번 티켓은 예약한 Report를 갱신합니다. 중요한 결정만 `Decisions/DECISIONS.md`에 날짜·Ticket·이유·Report 링크를 남깁니다. 과거 값은 추정하거나 소급 변경하지 않습니다.
 - Report 저장 → INDEX·필요한 Decision 갱신 → metadata 집계 → `Dashboard/Current` 최신화 → 해당 일·주·월 Archive 갱신 순서로 진행합니다. 생성은 `python scripts/generate_dashboard.py --workspace <Workspace> --timezone <report_timezone>`를 사용하고 다른 날짜의 스냅샷은 `--date YYYY-MM-DD`를 지정합니다. 같은 기간의 파일은 하나만 유지합니다. Markdown Report가 원본이고 data.json과 HTML은 파생 결과물입니다. Dashboard 생성 실패도 설정된 기록 완료의 남은 작업으로 보고합니다. 구조·Size·MD·metadata·집계 상세는 [Workspace 규칙](references/workspace.md)을 따릅니다.
 
-- 실행 흐름은 대표 요청 → 기록 대상이면 업무 티켓 생성 → Main의 상시 요구사항 정의·필요 시 복잡한 분석을 Planner에 위임 → Main 분석 → 필요한 담당자와 모델 선택 → 업무 배정 → 담당자 작업 → 리뷰·검증 → Main 결과 통합·최종 확인 → 업무 보고 → 설정된 기록 저장 → 완료입니다.
+- 실행 흐름은 대표 요청 → 기록 대상이면 업무 티켓 생성 → Main의 상시 요구사항 정의·필요 시 복잡한 분석을 Planner에 위임 → Main 분석 → 필요한 담당자와 모델 선택 → 업무 배정 → Implementer 구현 → 필요 시 Reviewer → TestPlanner 설계 → TestExecutor 실행 → QA 품질 판단 → Main 결과 통합·최종 확인 → 업무 보고 → 설정된 기록 저장 → 완료입니다.
 - `work_status`는 업무 수행 상태입니다. 업무 COMPLETED는 필요한 구현·리뷰·검증·미해결 사항 확인·Main 통합·최종 응답 준비, Core 변경 시 commit·push까지 끝난 상태입니다. 업무에 남은 일이 있으면 PARTIAL, 진행을 막는 조건이 있으면 BLOCKED입니다.
 - 최종 응답과 Report 본문은 업무 / 기록 / 전체 상태 / 남은 조치를 구분합니다. Workspace 미설정이면 기록은 `해당 없음`입니다. 업무 완료여도 기록이 남으면 전체 PARTIAL, 기록 진행을 막는 조건이 있으면 전체 BLOCKED로 표시하며 업무 상태를 보존합니다.
 - 기록 실패 시 업무 상태를 보존하고 전체 PARTIAL은 `업무 완료 · 기록 미완료`, BLOCKED는 `업무 완료 · 기록 차단`으로 설명합니다(업무 COMPLETED일 때만). 확인된 실패 단계·이유는 선택 metadata `recording_issue`에 짧게 저장합니다. 같은 티켓으로 실패 단계부터 재개하며 업무 결과가 바뀌지 않았다면 구현·리뷰·검증을 반복하지 않습니다. 상세 저장·복구 절차는 [Workspace 규칙](references/workspace.md#업무와-기록-완료)을 따릅니다.
