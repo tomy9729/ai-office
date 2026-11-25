@@ -1,6 +1,6 @@
 # AI Office
 
-Version: **0.8.1**
+Version: **0.9.0**
 Source of Truth: [tomy9729/ai-office](https://github.com/tomy9729/ai-office)
 
 AI Office는 대표(User)의 요청을 업무 조율자(Main)가 분석하고 필요한 담당자(Sub Agent)와 함께 수행하는 수평 원팀입니다. Main은 상사가 아니며 역할과 모델에 서열을 두지 않습니다. 회사·프로젝트 지식은 외부 Plugin, Skill 또는 프로젝트 AGENTS.md에 둡니다.
@@ -63,6 +63,8 @@ python scripts/generate_dashboard.py --workspace /path/to/workspace --timezone A
 ```
 
 Report·INDEX·필요한 Decision 저장 뒤 실행합니다. `--date`는 스냅샷 기간의 기준일이고 기본값은 지정 timezone의 현재 날짜입니다. 해당 일·주·월 파일 하나씩을 갱신합니다. DB·서버·watcher·실시간 Agent 상태 수집은 추가하지 않습니다. 상세 규칙과 제한은 [Workspace 규칙](references/workspace.md), metadata 예시는 [템플릿](references/templates.md)을 따릅니다.
+
+0.9.0은 로컬 Codex에서 서브 에이전트 생성 요청을 검사하는 선택 설치 훅을 추가합니다.
 
 0.8.1은 역할 정의에서 변동 가능한 모델 ID를 제거하고, Main의 생성 전 지원·역량·비용·명시 effort 확인 gate와 테스트 역할별 동적 모델 선택 조건을 추가한 PATCH 변경입니다. 0.8.0은 TestPlanner/TestExecutor를 추가해 테스트 설계·실행을 분리하고, QA의 증거 기반 최종 판단·Debugger의 실패 분석 경계를 정의한 MINOR 변경입니다. 모델·browser·권한 제약은 [testing.md](references/testing.md)에 있습니다. 새 역할은 동기화 후 다음 세션에서 확인합니다.
 
@@ -139,6 +141,42 @@ Get-ChildItem -LiteralPath "$officeInstall/roles" -Filter 'office-*.toml' | ForE
 전역 AGENTS.md에는 [examples/AGENTS.example.md](examples/AGENTS.example.md)의 진입점과 필요한 개인 설정만 둡니다. 프로젝트 지침은 프로젝트 AGENTS.md에 둡니다. Skill 폴더 전체를 junction으로 연결하는 대신 실제 checkout을 발견 경로에 둡니다.
 
 설치 경로와 custom-agent 형식의 근거: [Skills 문서](https://learn.chatgpt.com/docs/build-skills), [Subagent 문서](https://learn.chatgpt.com/docs/agent-configuration/subagents). runtime마다 도구와 기능은 세션에서 다시 확인합니다.
+
+### 선택 설치 · 서브 에이전트 모델 차단 훅
+
+Node.js와 로컬 Codex의 [PreToolUse 훅](https://learn.chatgpt.com/docs/hooks#pretooluse)을 사용합니다. 아래 항목을 사용자 `$CODEX_HOME/hooks.json`에 추가합니다. `CODEX_HOME`이 비어 있으면 `~/.codex/hooks.json`을 사용합니다. 이미 훅이 있으면 기존 `hooks.PreToolUse` 배열에 항목만 추가합니다.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^(Agent|.*spawn_agent)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/absolute/path/to/ai-office/scripts/spawn-model-guard.cjs\" gpt-6-luna gpt-6.1-terra",
+            "commandWindows": "node.exe \"C:/path/to/ai-office/scripts/spawn-model-guard.cjs\" gpt-6-luna gpt-6.1-terra",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+자기 checkout의 절대 경로와 현재 사용 가능한 비교 후보 ID로 바꿉니다. 예시의 Luna·Terra는 설정값이며 AI Office 공통 규칙에서 특정 모델을 고정하지 않습니다. 설정 후 Codex의 **Settings → Hooks** 또는 CLI의 `/hooks`에서 해당 훅을 검토하고 신뢰한 뒤 새 로컬 세션을 엽니다.
+
+모델을 명시하지 않은 `spawn_agent`는 거부합니다. Sol·Astra가 필요하면 호출 직전 같은 턴의 assistant commentary에 실제 작업명, 모델 ID, 설정한 후보별 제외 이유를 남깁니다.
+
+```text
+Subagent model comparison [review_example] [gpt-6.2-sol]
+Model comparison [gpt-6-luna]: <이 후보가 충족하지 못하는 작업 요건>
+Model comparison [gpt-6.1-terra]: <이 후보가 충족하지 못하는 작업 요건>
+```
+
+훅은 현재 작업의 비교 블록과 사유가 있는지 검사합니다. 사유의 타당성은 Main이 판단합니다. Codex가 JSONL transcript를 제공하지 않거나 읽을 수 없는 경우 Sol·Astra 호출은 거부됩니다. 훅 동작 점검은 `node --test scripts/test_spawn_model_guard.cjs`로 실행합니다. 이 검사와 별도로 실제 환경에서 모델 미지정 또는 근거 없는 Sol 요청이 거부되고 저비용 후보가 생성되는지 확인합니다.
 
 ## 업데이트와 변경
 
